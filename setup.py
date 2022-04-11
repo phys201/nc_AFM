@@ -1,11 +1,12 @@
 from setuptools import setup
 
-setup(name='example',
+setup(name='nc_AFM',
       version='1.0',
-      description='An example package for Harvard PHYS201',
+      description='An package for Harvard PHYS201',
+      long_description=readme()
       url='http://github.com/phys201/example',
-      author='ralex0',
-      author_email='ralex0@users.noreply.github.com',
+      author='Alyson Spitzig',
+      author_email='alyson.spitzig@gmail.com',
       license='GPLv3',
-      packages=['example'],
+      packages=['lennardjones'],
       install_requires=['numpy'])
