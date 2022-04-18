@@ -1,6 +1,6 @@
 from setuptools import setup
 
-setup(name='example',
+setup(name='ncafm',
       version='1.0',
       description='An package for Harvard PHYS201',
       long_description=readme(),
@@ -8,5 +8,5 @@ setup(name='example',
       author='Alyson Spitzig', 'Houchen Li', 'Talha Rehman',
       author_email='alyson.spitzig@gmail.com', 'houchenli@g.harvard.edu', 'talha@g.harvard.edu',
       license='GPLv3',
-      packages=['lennardjones'],
+      packages=['ncafm'],
       install_requires=['numpy', 'pymc3', 'arviz', 'seasborn'])
