@@ -12,7 +12,7 @@ import pymc3 as pm
 import arviz as az
 import seaborn as sns
 
-def len_jon_model(force_data, noise, epsilon_initial_guess, sigma_initial_guess, epsilon_lower = 0.0001, epislon_upper = 1000, sigma_lower = 0.0001, simga_upper = 1000):
+def len_jon_model(force_data, noise, epsilon_initial_guess, sigma_initial_guess, epsilon_lower = 0.0001, epsilon_upper = 1000, sigma_lower = 0.0001, sigma_upper = 1000):
     
     '''
     generates Lennard Jones force model
