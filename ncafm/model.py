@@ -12,16 +12,22 @@ import pymc3 as pm
 import arviz as az
 import seaborn as sns
 
-def len_jon_model(epsilon,sigma, f_testdata):
+def len_jon_model(force_data, noise, epsilon_initial_guess, sigma_initial_guess, epsilon_lower = 0.0001, epislon_upper = 1000, sigma_lower = 0.0001, simga_upper = 1000):
     
     '''
     generates Lennard Jones force model
     
     Inputs:
     -------
-    epsilon: float. The depth of the well in the L-J theory
-    sigma: float. The distance to 0 potential in the L-J theory
-    f_testdata: ndarray. Observed noisy Lennard Jones force data
+    
+    force_data: ndarray. Observed (noisy) Lennard Jones force data
+    noise: float or ndarray (of size force_data)
+    
+    epsilon_lower: float. The minimum value for epsilon in the prior (the depth of the well)
+    epsilon_upper: float. The maximum value for epsilon in the prior (the depth of the well)
+    
+    sigma_lower: float. The minimum value for sigma in the prior (the sizw of the well)
+    sigma_upper: float. The maximum value for sigma in the prior (the sizw of the well)
     
     Returns:
     --------
@@ -32,22 +38,23 @@ def len_jon_model(epsilon,sigma, f_testdata):
     with lj_model:
 
         #Jefferys prior from 0.0001 (10e-4) to 1000 e3
-        logepsilon = pm.Uniform('logepsilon', -4, 3, testval = np.log10(9))
-        logsigma = pm.Uniform('logsigma',-4, 3, testval = np.log10(2))
-
+        logepsilon = pm.Uniform('logepsilon', np.log10(epsilon_lower), np.log10(epsilon_upper), testval = np.log10(epsilon_initial_guess))
+        logsigma = pm.Uniform('logsigma', np.log10(sigma_lower), np.log10(sigma_upper), testval = np.log10(sigma_initial_guess))
+        
         #convert to reg parameters:
         epsilon = pm.Deterministic('epsilon', 10**(logepsilon))
         sigma = pm.Deterministic('sigma', 10**(logsigma))
 
         #model
-        force = 4*epsilon*(12*sigma**12/z**13 - 6*sigma**6/z**7)
+        force_model = 4*epsilon*(12*sigma**12/z**13 - 6*sigma**6/z**7)
 
         # Likelihood of observations (i.e. noise around model)
-        measurements = pm.Normal('F', mu=force, sigma=noise, observed=f_testdata)
+        measurements = pm.Normal('force', mu=force_model, sigma=noise, observed=force_data)
+    
     return lj_model
     
 
-def vdwm3_model(epsilon,sigma, radius, z, f_testdata_m3):
+def vdwm3_model(epsilon, sigma, radius, z, f_testdata_m3):
     
     '''
     generates force model which includes the repulsive term from the Lennard Jones force and a physically motivated 
