@@ -105,7 +105,7 @@ def vdwm3_model(epsilon,sigma, radius, z, f_testdata_m3):
 
 def vdwm3_newrep(repulsive_factor, sigma, radius, z, hamaker_fixed, f_testdata_m3_rep):
     
-        '''
+    '''
     generates noisy force data which includes the new repulsive term from the Lennard Jones force (~z^-3) 
     and a physically motivated vdW force.
     
@@ -119,9 +119,8 @@ def vdwm3_newrep(repulsive_factor, sigma, radius, z, hamaker_fixed, f_testdata_m
     f_testdata_m3: ndarray. Simulated noisy Lennard Jones + vdW force data with modified repulsive term
     Returns:
     --------
-    data: ndarray (of size z) of the corresponding new Lennard Jones + vdW M3, 
-        with noise, assuming a normal distribution of the noise
-        '''
+    m3_rep_model: new Lennard Jones + vdW M3 model 
+    '''
 
     m3_rep_model = pm.Model()
 
