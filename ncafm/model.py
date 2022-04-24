@@ -45,7 +45,7 @@ def len_jon(force_data, noise, prior_type = 'Jeffreys', epsilon_init = 1, sigma_
             epsilon = pm.Deterministic('epsilon', 10**(logepsilon))
             sigma = pm.Deterministic('sigma', 10**(logsigma))
         
-        else if prior_type == 'uniform' or 'Uniform':
+        elif prior_type == 'uniform' or 'Uniform':
             epsilon = pm.Uniform('epsilon', epsilon_lower, epsilon_upper)
             sigma = pm.Uniform('epsilon', sigma_lower, sigma_upper)
             
@@ -108,7 +108,7 @@ def vdw_lj_rep(force_data, noise, hamaker, prior_type = 'Jeffreys', lj_rep_init 
             #convert to reg parameters:
             lj_rep = pm.Deterministic('lj_rep', 10**(log_lj_rep))
         
-        else if prior_type == 'uniform' or 'Uniform':
+        elif prior_type == 'uniform' or 'Uniform':
             lj_rep = pm.Uniform('lj_rep', lj_rep_lower, lj_rep_upper)
             
         else:
@@ -181,7 +181,7 @@ def vdw_mod_rep(force_data, noise, hamaker, prior_type = 'Jeffreys', rep_factor_
             #convert to reg parameters:
             rep_factor = pm.Deterministic('rep_factor', 10**(log_rep_factor))
         
-        else if prior_type == 'uniform' or 'Uniform':
+        elif prior_type == 'uniform' or 'Uniform':
             rep_factor = pm.Uniform('rep_factor', rep_factor_lower, rep_factor_upper)
             
         else:
