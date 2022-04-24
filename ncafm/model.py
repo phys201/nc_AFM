@@ -4,14 +4,14 @@
 import numpy as np
 import pymc3 as pm
 
-def len_jon(force_data, noise, prior_type = 'Jeffreys', epsilon_init = 1, sigma_init = 1, epsilon_lower = 0.001, epislon_upper = 1000, sigma_lower = 0.001, simga_upper = 1000):
+def len_jon(z, force_data, noise, prior_type = 'Jeffreys', epsilon_init = 1, sigma_init = 1, epsilon_lower = 0.001, epsilon_upper = 1000, sigma_lower = 0.001, sigma_upper = 1000):
     
     '''
     generates Lennard Jones force model
     
     Inputs:
     -------
-    
+    z: ndarray. [in nm]. x data of the observed force data. 
     force_data: ndarray. [in nN] Observed (noisy) force data to fit to a purely Lennard Jones model
     noise: float or ndarray (of size force_data) [in nN] 
     
@@ -38,16 +38,16 @@ def len_jon(force_data, noise, prior_type = 'Jeffreys', epsilon_init = 1, sigma_
 
         if prior_type == 'Jeffreys':
             #Jefferys prior
-            logepsilon = pm.Uniform('logepsilon', np.log10(epsilon_lower), np.log10(epsilon_upper), testval = np.log10(epsilon_initial_guess))
-            logsigma = pm.Uniform('logsigma', np.log10(sigma_lower), np.log10(sigma_upper), testval = np.log10(sigma_initial_guess))
+            logepsilon = pm.Uniform('logepsilon', np.log10(epsilon_lower), np.log10(epsilon_upper), testval = np.log10(epsilon_init))
+            logsigma = pm.Uniform('logsigma', np.log10(sigma_lower), np.log10(sigma_upper), testval = np.log10(sigma_init))
         
             #convert to reg parameters:
             epsilon = pm.Deterministic('epsilon', 10**(logepsilon))
             sigma = pm.Deterministic('sigma', 10**(logsigma))
         
         elif prior_type == 'uniform' or 'Uniform':
-            epsilon = pm.Uniform('epsilon', epsilon_lower, epsilon_upper)
-            sigma = pm.Uniform('epsilon', sigma_lower, sigma_upper)
+            epsilon = pm.Uniform('epsilon', epsilon_lower, epsilon_upper, testval = epsilon_init)
+            sigma = pm.Uniform('epsilon', sigma_lower, sigma_upper, testval = sigma_init)
             
         else:
             return ValueError('prior_type does not correspond to a defined prior type. Options: Jeffreys, uniform')
@@ -61,14 +61,14 @@ def len_jon(force_data, noise, prior_type = 'Jeffreys', epsilon_init = 1, sigma_
     return lj_model
     
 
-def vdw_lj_rep(force_data, noise, hamaker, prior_type = 'Jeffreys', lj_rep_init = 1000, radius_init = 25, theta_init = 35, lj_rep_lower = 100, lj_rep_upper = 10**8, radius_lower = 10, radius_upper = 60, theta_var = 15):
+def vdw_lj_rep(z, force_data, noise, hamaker, prior_type = 'Jeffreys', lj_rep_init = 1000, radius_init = 25, theta_init = 35, lj_rep_lower = 100, lj_rep_upper = 10**8, radius_lower = 10, radius_upper = 60, theta_var = 15):
     
     '''
     Generates a force model which includes the repulsive term from the Lennard Jones force (1/z^13) and vdW force for the attractive term physically motivated by a sphere at the end of a cone.
     
     Inputs:
     -------
-    
+    z: ndarray. [in nm]. x data of the observed force data. 
     force_data: ndarray. [in nN] Observed (noisy) force data to fit to a purely Lennard Jones model
     noise: float or ndarray (of size force_data) [in nN] 
     hamaker: float. Hamaker's Constant. [in aJ] The constant is defined for each pair of materials. User must calculate the value. 
@@ -109,7 +109,7 @@ def vdw_lj_rep(force_data, noise, hamaker, prior_type = 'Jeffreys', lj_rep_init 
             lj_rep = pm.Deterministic('lj_rep', 10**(log_lj_rep))
         
         elif prior_type == 'uniform' or 'Uniform':
-            lj_rep = pm.Uniform('lj_rep', lj_rep_lower, lj_rep_upper)
+            lj_rep = pm.Uniform('lj_rep', lj_rep_lower, lj_rep_upper, testval = lj_rep_init)
             
         else:
             return ValueError('prior_type does not correspond to a defined prior type. Options: Jeffreys, uniform')
@@ -134,14 +134,14 @@ def vdw_lj_rep(force_data, noise, hamaker, prior_type = 'Jeffreys', lj_rep_init 
     return m3_model
 
 
-def vdw_mod_rep(force_data, noise, hamaker, prior_type = 'Jeffreys', rep_factor_init = 10, radius_init = 25, theta_init = 35, rep_factor_lower = 0.1, rep_factor_upper = 10000, radius_lower = 10, radius_upper = 60, theta_var = 15):
+def vdw_mod_rep(z, force_data, noise, hamaker, prior_type = 'Jeffreys', rep_factor_init = 10, radius_init = 25, theta_init = 35, rep_factor_lower = 0.1, rep_factor_upper = 10000, radius_lower = 10, radius_upper = 60, theta_var = 15):
     
     '''
     Generates a force model which includes a modified repulsive term from the Lennard Jones force (~1/z^3) derived from squaring the highest power of z in the vdw potential and an attracrive vdW force derived from by a sphere at the end of a cone.
     
     Inputs:
     -------
-    
+    z: ndarray. [in nm]. x data of the observed force data. 
     force_data: ndarray. [in nN] Observed (noisy) force data to fit to a purely Lennard Jones model
     noise: float or ndarray (of size force_data) [in nN] 
     hamaker: float. Hamaker's Constant. [in aJ] The constant is defined for each pair of materials. User must calculate the value. 
@@ -182,7 +182,7 @@ def vdw_mod_rep(force_data, noise, hamaker, prior_type = 'Jeffreys', rep_factor_
             rep_factor = pm.Deterministic('rep_factor', 10**(log_rep_factor))
         
         elif prior_type == 'uniform' or 'Uniform':
-            rep_factor = pm.Uniform('rep_factor', rep_factor_lower, rep_factor_upper)
+            rep_factor = pm.Uniform('rep_factor', rep_factor_lower, rep_factor_upper, testval = rep_factor_init)
             
         else:
             return ValueError('prior_type does not correspond to a defined prior type. Options: Jeffreys, uniform')
@@ -203,6 +203,6 @@ def vdw_mod_rep(force_data, noise, hamaker, prior_type = 'Jeffreys', rep_factor_
                                                     )
 
         # Likelihood of observations (i.e. noise around model)
-        measurements = pm.Normal('force', mu=force_model, sigma=noise, observed=fore_data)
+        measurements = pm.Normal('force', mu=force_model, sigma=noise, observed=force_data)
     
     return m3_newrep_model
