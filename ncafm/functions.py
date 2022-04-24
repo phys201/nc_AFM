@@ -1,6 +1,6 @@
 import numpy as np
 
-def calculate_force(a,k,f_0, z, df_data):
+def df2force(df_data, z, a, k, f_0):
     
     '''
     calculates force from given frequency shift data and corresponding z positions.
@@ -10,17 +10,19 @@ def calculate_force(a,k,f_0, z, df_data):
     
     Inputs:
     -------
-    a: float. amplitude of oscillation in units of m
-    k: spring constant of the AFM tip. in untis of N/m
-    f_0: reasonant frequency of the AFM tip. in Hz.
+    df_data: frequency shift data at corresponding z positions. In units of [Hz]. 
     z: ndarray of the height of the tip. It does not need to be height with respect to sample,
-        but the differences between heights need to be accurate.
-    df_data: frequency shift data at corresponding z positions. In units of Hz. 
+        but the differences between heights need to be accurate. In units of [m]
+    a: float. amplitude of oscillation in units of [m]
+    k: spring constant of the AFM tip. in untis of [N/m]
+    f_0: reasonant frequency of the AFM tip. in [Hz].
     
     Returns:
     --------
-    force_array: ndarray (of size z) of the corresponding force, calculated using the method outlined
-        by Sader and Jarvis (2004) DOI: 10.1063/1.1667267 Eg (9)
+    force_array: ndarray (of size z - 1) of the corresponding force in units of [N], calculated using the method outlined
+        by Sader and Jarvis (2004) DOI: 10.1063/1.1667267 Eg (9).
+        
+        Notice: the resulting force array is smaller than the input z and df arrays by 1 due to taking a derivative. The final data point should be removed from z. 
     
     '''
     
