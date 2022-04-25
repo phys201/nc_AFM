@@ -1,4 +1,5 @@
 import numpy as np
+import scipy.stats
 
 def df2force(z, df_data, a, k, f_0):
     
@@ -68,3 +69,40 @@ def df2force(z, df_data, a, k, f_0):
     force_array = first_term+second_term+third_term+correction_term
     
     return force_array
+
+
+def ptp2variation(ptp, averaging_time, sampling_rate = 100000, plot = False):
+    '''
+    A function that converts the peak to peak measurement to a time-averaged Gaussian noise variation.
+    
+    The easiest way to do this is to convolve the high frequency noise array with an array of ones of the lenth I want to take a rolling average of. I use 'valid' so that np.convolve only starts once the 1-array fully inside the noise array.
+    
+    Inputs:
+    -------
+    ptp: float. In Hz. Peak-to-peak value of the signal when the sample is out of range.
+    averaging_time: float. In s. Time to average over the high frequency noise - ie the time of the measurement,
+    sampling_rate: float. sampling rate of the signal. Default on our oscilloscope is 10000 /s. 
+        This may be the resonant frequency (~20 000) for some cases.
+        
+    plot: boolean (optional). Make a plot of the artificially generated noise.
+        
+    Returns:
+    -------
+    averaged_noise: float. In s. The high-frequnencu noise averaged over the length of the measurement.
+    
+    '''
+    
+    half_ptp = ptp/2
+    f_sampling = 100000
+
+    test_time = np.arange(0,1, 1/f_sampling)
+
+    test_noise = scipy.stats.norm.rvs(loc=0, scale = half_ptp, size = len(test_time))
+    
+    average_over_n_indices = int(len(test_noise)/len(np.arange(0,1,averaging_time)))
+    
+    rolling_ave_noise = np.convolve(test_noise, np.ones([average_over_n_indices]), 'valid')/average_over_n_indices
+    
+    averaged_noise = np.abs(np.mean(rolling_ave_noise))
+    
+    return averaged_noise
