@@ -18,20 +18,6 @@ filename = 'all_data_dataframe_237K.csv'
 
 full_data_directory = Path(package_path, data_folder_path, filename)
 
-'''
-I will have to edit this with a different path
-
-test_path = io.get_example_data_file_path(filename, data_dir = additional_path)
-
-class TestDataPathing(TestCase):
-    def test_inputs_for_get_path(self):
-        
-        #use Path to define the path
-        current_directory = Path.cwd()
-        directory = Path(current_directory, additional_path, filename)
-        
-        self.assertEqual(directory, test_path)
-'''        
 class TestDataImport(TestCase):
     def test_get_data(self):
         self.testdata = io.load_data(full_data_directory)
