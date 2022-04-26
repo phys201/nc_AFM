@@ -71,7 +71,7 @@ def df2force(z, df_data, a, k, f_0):
     return force_array
 
 
-def ptp2variation(ptp, averaging_time, sampling_rate = 100000, plot = False):
+def ptp2variation(ptp, averaging_time, sampling_rate = 10000, plot_high_freq = False):
     '''
     A function that converts the peak to peak measurement to a time-averaged Gaussian noise variation.
     
@@ -93,11 +93,16 @@ def ptp2variation(ptp, averaging_time, sampling_rate = 100000, plot = False):
     '''
     
     half_ptp = ptp/2
-    f_sampling = 10000
 
-    test_time = np.arange(0, 1, 1/f_sampling)
+    test_time = np.arange(0, 1, 1/sampling_rate)
 
     test_noise = scipy.stats.norm.rvs(loc=0, scale = half_ptp, size = len(test_time))
+    
+    if plot_high_freq == True:
+        plt.plot(test_time, test_noise)
+        plt.xlabel('time (s)')
+        plt.ylabel('measurement (Hz)');
+        plt.show()
     
     average_over_n_indices = int(len(test_noise)/len(np.arange(0,1,averaging_time)))
     
@@ -108,7 +113,7 @@ def ptp2variation(ptp, averaging_time, sampling_rate = 100000, plot = False):
     return averaged_noise
 
 
-def simulate_lj_data(epsilon, sigma, noise, z):
+def simulate_lj_data(epsilon, sigma, noise, z, z_0=0):
     
     '''
     generates noisy Lennard Jones force data
@@ -119,6 +124,7 @@ def simulate_lj_data(epsilon, sigma, noise, z):
     sigma: float. The distance to 0 potential in the L-J theory
     noise: float or ndarray (of size z) of noise to be added at each point.
     z: ndarray. the range over which the function will generate the data
+    z_0: float. In nm. A z offset. Optional, default is no offset.
     
     Returns:
     --------
@@ -135,7 +141,7 @@ def simulate_lj_data(epsilon, sigma, noise, z):
     #I know this will create something ~ nN
     return noisyLJ_data
 
-def simulate_data_sph(factor, hamaker, radius, noise, z, z_0):
+def simulate_data_sph(factor, hamaker, radius, noise, z, z_0=0):
     
     '''
     generates noisy force data which includes the new repulsive term from the Lennard Jones force (~z^-3) 
@@ -149,6 +155,7 @@ def simulate_data_sph(factor, hamaker, radius, noise, z, z_0):
     radius: float. In nm. radius of the sphere of the tip.
     noise: float In nN. or ndarray (of size z) of noise to be added at each point.
     z: ndarray. In nm. the range over which the function will generate the data
+    z_0: float. In nm. A z offset. Optional, default is no offset.
     
     Returns:
     --------
@@ -167,7 +174,7 @@ def simulate_data_sph(factor, hamaker, radius, noise, z, z_0):
     #I know this will create something ~ nN
     return noisy_m1_data
 
-def simulate_data_cone(factor, hamaker, theta, noise, z):
+def simulate_data_cone(factor, hamaker, theta, noise, z, z_0 = 0):
     
     '''
     generates noisy force data which includes the new repulsive term from the Lennard Jones force (~z^-3) 
@@ -178,9 +185,10 @@ def simulate_data_cone(factor, hamaker, theta, noise, z):
     factor: float. In aJ/nm^2. The repulsive term factor. 
         Equal to epsilon*sigma^2 in the LJ model, but even less physically motivated. 
     hamaker: float. In aJ. Hamaker's constant for the specific tip and sample materials.
-    radius: float. In nm. radius of the sphere of the tip.
+    theta: float. In degrees. half-angle opening of the tip.
     noise: float In nN. or ndarray (of size z) of noise to be added at each point.
     z: ndarray. In nm. the range over which the function will generate the data
+    z_0: float. In nm. A z offset. Optional, default is no offset.
     
     Returns:
     --------
@@ -199,7 +207,7 @@ def simulate_data_cone(factor, hamaker, theta, noise, z):
     return noisy_m2_data
 
 
-def simulate_data_sph_cone(factor, hamaker, radius, theta, noise, z):
+def simulate_data_cone_sph(factor, hamaker, radius, theta, noise, z, z_0=0):
     
     '''
     generates noisy force data which includes the new repulsive term from the Lennard Jones force (~z^-3) 
@@ -214,6 +222,7 @@ def simulate_data_sph_cone(factor, hamaker, radius, theta, noise, z):
     theta: float. In degrees. half-angle opening of the conical part of the tip. 
     noise: float In nN. or ndarray (of size z) of noise to be added at each point.
     z: ndarray. In nm. the range over which the function will generate the data
+    z_0: float. In nm. A z offset. Optional, default is no offset.
     
     Returns:
     --------

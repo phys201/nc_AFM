@@ -4,7 +4,7 @@
 import numpy as np
 import pymc3 as pm
 
-def len_jon(z, force_data, noise, prior_type = 'Jeffreys', epsilon_init = 1, sigma_init = 1, epsilon_lower = 0.01, epsilon_upper = 100, sigma_lower = 0.01, sigma_upper = 100):
+def len_jon(z_input, force_data, noise, fit_z0 = False, prior_type = 'Jeffreys', epsilon_init = 1, sigma_init = 1, epsilon_lower = 0.01, epsilon_upper = 100, sigma_lower = 0.01, sigma_upper = 100):
     
     '''
     generates Lennard Jones force model
@@ -51,7 +51,14 @@ def len_jon(z, force_data, noise, prior_type = 'Jeffreys', epsilon_init = 1, sig
             
         else:
             return ValueError('prior_type does not correspond to a defined prior type. Options: Jeffreys, uniform')
-
+        
+        if fit_z0 == True:
+            #Should make this a truncated normal with the min being where z starts to go negative.
+            z_0 = pm.Normal('z offset', mu=0, sigma = 1, testval = 0)
+            z = z_input - z_0
+        else:
+            z = z_input
+        
         #model
         force_model = 4*epsilon*(12*sigma**12/z**13 - 6*sigma**6/z**7)
 
@@ -201,7 +208,7 @@ def vdw_cone(z_input, force_data, noise, hamaker, fit_z0 = False, prior_type = '
     
     return m2_z3_rep
 
-def vdw_sph_cone(z_input, force_data, noise, hamaker, fit_z0 = False, prior_type = 'Jeffreys', rep_factor_init = 100, radius_init = 25, theta_init = 35, rep_lower = 0.1, rep_upper = 10**5, radius_var = 10, theta_var = 15):
+def vdw_cone_sph(z_input, force_data, noise, hamaker, fit_z0 = False, prior_type = 'Jeffreys', rep_factor_init = 100, radius_init = 25, theta_init = 35, rep_lower = 0.1, rep_upper = 10**5, radius_var = 10, theta_var = 20):
     
     '''
     Generates a force model which includes the repulsive term from the Lennard Jones force that goes as ~ 1/z^3 and vdW force for the attractive term physically motivated by a sphere at the end of a cone.
