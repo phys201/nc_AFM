@@ -23,7 +23,7 @@ class Testdf2force(TestCase):
         self.assertEqual(size_z-1, size_force)
         
     def test_force_magnitude(self):
-        'minimum force for these values should be ~ -10 nN ~= 10^-8)'
+        '''minimum force for these values should be ~ -10 nN ~= 10^-8)'''
         dummy_force = fcn.df2force(dummy_z, dummy_df, dummy_a, dummy_k, dummy_f0)
         min_force = np.abs(np.min(dummy_force))
         self.assertAlmostEqual(-8, np.log10(min_force),1)
