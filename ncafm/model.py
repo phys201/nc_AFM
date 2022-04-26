@@ -4,7 +4,7 @@
 import numpy as np
 import pymc3 as pm
 
-def len_jon(z, force_data, noise, prior_type = 'Jeffreys', epsilon_init = 1, sigma_init = 1, epsilon_lower = 0.001, epsilon_upper = 1000, sigma_lower = 0.001, sigma_upper = 1000):
+def len_jon(z, force_data, noise, prior_type = 'Jeffreys', epsilon_init = 1, sigma_init = 1, epsilon_lower = 0.01, epsilon_upper = 100, sigma_lower = 0.01, sigma_upper = 100):
     
     '''
     generates Lennard Jones force model
@@ -22,11 +22,11 @@ def len_jon(z, force_data, noise, prior_type = 'Jeffreys', epsilon_init = 1, sig
     epsilon_init: float. [in aJ] starting point for epsilon. default = 1.
     sigma_init: float. [in nm] starting point for sigma. default = 1. 
     
-    epsilon_lower: float. [in aJ] The minimum value for epsilon in the prior (the depth of the well). default = e-3.
-    epsilon_upper: float. [in aJ] The maximum value for epsilon in the prior (the depth of the well). default = e3.
+    epsilon_lower: float. [in aJ] The minimum value for epsilon in the prior (the depth of the well). default = e-2.
+    epsilon_upper: float. [in aJ] The maximum value for epsilon in the prior (the depth of the well). default = e2.
     
-    sigma_lower: float. [in nm] The minimum value for sigma in the prior (the size of the well). default = e-3.
-    sigma_upper: float. [in nm] The maximum value for sigma in the prior (the size of the well). default = e3.
+    sigma_lower: float. [in nm] The minimum value for sigma in the prior (the size of the well). default = e-2.
+    sigma_upper: float. [in nm] The maximum value for sigma in the prior (the size of the well). default = e2.
     
     Returns:
     --------
@@ -315,13 +315,13 @@ def vdw_ele(z_input, force_data, noise, voltage, rep_factor, radius_init, radius
         #uniform on radius
         radius = pm.Gamma('radius', mu=radius_init, sigma = radius_var, testval = radius_init)
         
-        if vdw_type = 'sph':
+        if vdw_type == 'sph':
             vdw_force = - 2*hamaker*radius**3/(3*z**2*(z+2*radius)**2)
             
-        elif vdw_type = 'cone':
+        elif vdw_type == 'cone':
             vdw_force = - hamaker*np.tan(theta_rad)**2/(6*z)
             
-        elif vdw_type = 'sph+cone':
+        elif vdw_type == 'sph+cone':
             vdw_force = - hamaker/6*( radius/z**2 
                                         + radius*(1-np.sin(theta_rad))/(z*(z+ radius*(1-np.sin(theta_rad)) )) 
                                         + (np.tan(theta_rad))**2/(z+ radius*(1-np.sin(theta_rad)) ) 
