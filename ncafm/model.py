@@ -60,7 +60,70 @@ def len_jon(z, force_data, noise, prior_type = 'Jeffreys', epsilon_init = 1, sig
     
     return lj_model
     
+def len_jon_ele(z, force_data, noise, voltage, prior_type = 'Jeffreys', epsilon_init = 1, sigma_init = 1, effective_area=1, epsilon_lower = 0.001, epsilon_upper = 1000, sigma_lower = 0.001, sigma_upper = 1000 ,effective_area_lower=0.001 , effective_area_upper=1e3 ):
+    
+    '''
+    generates Lennard Jones force model
+    
+    Inputs:
+    -------
+    z: ndarray. [in nm]. x data of the observed force data. 
+    force_data: ndarray. [in nN] Observed (noisy) force data to fit to a purely Lennard Jones model
+    noise: float or ndarray (of size force_data) [in nN] 
+    voltage: bias voltage applied between tip and sample [in nV]
+    
+    Optional inputs:
+    ---------------
+    prior_type: string. 'Jefferys' to use a Jeffreys prior, 'uniform' to use a uniform prior. Prior defines the prior on both epsilon and sigma. Default is Jeffreys.
+    
+    epsilon_init: float. [in aJ] starting point for epsilon. default = 1.
+    sigma_init: float. [in nm] starting point for sigma. default = 1. 
+    
+    epsilon_lower: float. [in aJ] The minimum value for epsilon in the prior (the depth of the well). default = e-3.
+    epsilon_upper: float. [in aJ] The maximum value for epsilon in the prior (the depth of the well). default = e3.
+    
+    sigma_lower: float. [in nm] The minimum value for sigma in the prior (the size of the well). default = e-3.
+    sigma_upper: float. [in nm] The maximum value for sigma in the prior (the size of the well). default = e3.
 
+    effective_area_lower: float. [in nm^2] The minimum value for effective_area in the prior . default = e-3.
+    effective_area_upper: float. [in nm^2] The maximum value for effective_area in the prior . default = e3.    
+
+    Returns:
+    --------
+    lj_ele_model: generated model
+    
+    '''
+    lj_ele_model = pm.Model()
+    with lj_ele_model:
+
+        if prior_type == 'Jeffreys':
+            #Jefferys prior
+            logepsilon = pm.Uniform('logepsilon', np.log10(epsilon_lower), np.log10(epsilon_upper), testval = np.log10(epsilon_init))
+            logsigma = pm.Uniform('logsigma', np.log10(sigma_lower), np.log10(sigma_upper), testval = np.log10(sigma_init))
+            logeffective_area = pm.Uniform('logeffective_areaa', np.log10(effective_area_lower), np.log10(effective_area_upper), testval = np.log10(effective_area_init))
+           
+            #convert to reg parameters:
+            epsilon = pm.Deterministic('epsilon', 10**(logepsilon))
+            sigma = pm.Deterministic('sigma', 10**(logsigma))
+            effective_area=pm.Deterministic('effective_area', 10**(logeffective_area))
+        
+        elif prior_type == 'uniform' or 'Uniform':
+            epsilon = pm.Uniform('epsilon', epsilon_lower, epsilon_upper, testval = epsilon_init)
+            sigma = pm.Uniform('epsilon', sigma_lower, sigma_upper, testval = sigma_init)
+            effective_area=pm.Uniform('effective_area',effective_area_lower, effective_area_upper, testval = effective_area_init)
+            
+        else:
+            return ValueError('prior_type does not correspond to a defined prior type. Options: Jeffreys, uniform')
+
+        #model
+        force_model = 4*epsilon*(12*sigma**12/z**13 - 6*sigma**6/z**7) + 9*10**36*voltage**2*effective_area**2/z**4
+
+        # Likelihood of observations (i.e. noise around model)
+        measurements = pm.Normal('force', mu=force_model, sigma=noise, observed=force_data)
+    
+    return lj_ele_model
+    
+    
 def vdw_lj_rep(z, force_data, noise, hamaker, prior_type = 'Jeffreys', lj_rep_init = 1000, radius_init = 25, theta_init = 35, lj_rep_lower = 100, lj_rep_upper = 10**8, radius_lower = 10, radius_upper = 60, theta_var = 15):
     
     '''
