@@ -1,9 +1,5 @@
 # nc_AFM 
 
-```
-import ncafm
-```
-
 Author: Alyson Spitzig, Houchen Li, Talha Rehman
 
 Licence: GNU General Public License v3
