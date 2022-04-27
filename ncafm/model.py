@@ -289,7 +289,7 @@ def vdw_cone_sph(z_input, force_data, noise, hamaker, fit_z0 = False, prior_type
     return m3_z3_model
 
     
-def vdw_ele(z_input, force_data, noise, voltage, rep_factor, radius_init, radius_var, theta=40, fit_z0 = False, vdw_type = 'sph', effective_area_lower=0.001 , effective_area_upper=1e3):
+def vdw_ele(z_input, force_data, noise, voltage, rep_factor, radius_init, radius_var, theta=40, fit_z0 = False, vdw_type = 'sph'):
     
     '''
     generates model for the force that includes a physically motivated vdw term and electrostatics term. 
@@ -312,7 +312,7 @@ def vdw_ele(z_input, force_data, noise, voltage, rep_factor, radius_init, radius
     
     Returns:
     --------
-    m3_z3_model: generated model
+    ele_model: generated model including electrostatic force
     
     '''
     ele_model = pm.Model()
@@ -344,7 +344,7 @@ def vdw_ele(z_input, force_data, noise, voltage, rep_factor, radius_init, radius
             z = z_input
         
         #model
-        force_model = rep/z**3 + vdw_force - 9*10**36*voltage**2*effective_area**2/z**4
+        force_model = rep/z**3 + vdw_force - 9*10**36*voltage**2*(pi*radius**2)**2/z**4
 
         # Likelihood of observations (i.e. noise around model)
         measurements = pm.Normal('force', mu=force_model, sigma=noise, observed=force_data)
