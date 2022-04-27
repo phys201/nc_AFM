@@ -1,4 +1,5 @@
 import numpy as np
+import scipy.stats
 
 def df2force(z, df_data, a, k, f_0):
     
@@ -68,3 +69,175 @@ def df2force(z, df_data, a, k, f_0):
     force_array = first_term+second_term+third_term+correction_term
     
     return force_array
+
+
+def ptp2variation(ptp, averaging_time, sampling_rate = 10000, plot_high_freq = False):
+    '''
+    A function that converts the peak to peak measurement to a time-averaged Gaussian noise variation.
+    
+    The easiest way to do this is to convolve the high frequency noise array with an array of ones of the lenth I want to take a rolling average of. I use 'valid' so that np.convolve only starts once the 1-array fully inside the noise array.
+    
+    Inputs:
+    -------
+    ptp: float. In Hz. Peak-to-peak value of the signal when the sample is out of range.
+    averaging_time: float. In s. Time to average over the high frequency noise - ie the time of the measurement,
+    sampling_rate: float. sampling rate of the signal. Default on our oscilloscope is 10000 /s (100000 per 10 s). 
+        This may be the resonant frequency (~20 000) for some cases.
+        
+    plot: boolean (optional). Make a plot of the artificially generated noise.
+        
+    Returns:
+    -------
+    averaged_noise: float. In s. The high-frequnencu noise averaged over the length of the measurement.
+    
+    '''
+    
+    half_ptp = ptp/2
+
+    test_time = np.arange(0, 1, 1/sampling_rate)
+
+    test_noise = scipy.stats.norm.rvs(loc=0, scale = half_ptp, size = len(test_time))
+    
+    if plot_high_freq == True:
+        plt.plot(test_time, test_noise)
+        plt.xlabel('time (s)')
+        plt.ylabel('measurement (Hz)');
+        plt.show()
+    
+    average_over_n_indices = int(len(test_noise)/len(np.arange(0,1,averaging_time)))
+    
+    rolling_ave_noise = np.convolve(test_noise, np.ones([average_over_n_indices]), 'valid')/average_over_n_indices
+    
+    averaged_noise = np.abs(np.mean(rolling_ave_noise))
+    
+    return averaged_noise
+
+
+def simulate_lj_data(epsilon, sigma, noise, z, z_0=0):
+    
+    '''
+    generates noisy Lennard Jones force data
+    
+    Inputs:
+    -------
+    epsilon: float. The depth of the well in the L-J theory
+    sigma: float. The distance to 0 potential in the L-J theory
+    noise: float or ndarray (of size z) of noise to be added at each point.
+    z: ndarray. the range over which the function will generate the data
+    z_0: float. In nm. A z offset. Optional, default is no offset.
+    
+    Returns:
+    --------
+    data: ndarray (of size z) of the corresponding Lennard Jones force, 
+        assuming a normal distribution of the noise
+    
+    '''
+    
+    perfect_data = 4*epsilon*(12*sigma**12/z**13 - 6*sigma**6/z**7)
+    
+    #add some noise
+    noisyLJ_data = perfect_data + scipy.stats.norm.rvs(loc=0, scale = noise, size = len(z))
+    
+    #I know this will create something ~ nN
+    return noisyLJ_data
+
+def simulate_data_sph(factor, hamaker, radius, noise, z, z_0=0):
+    
+    '''
+    generates noisy force data which includes the new repulsive term from the Lennard Jones force (~z^-3) 
+    and a physically motivated vdW force based on a simple sphere above a plane.
+    
+    Inputs:
+    -------
+    factor: float. In aJ/nm^2. The repulsive term factor. 
+        Equal to epsilon*sigma^2 in the LJ model, but even less physically motivated. 
+    hamaker: float. In aJ. Hamaker's constant for the specific tip and sample materials.
+    radius: float. In nm. radius of the sphere of the tip.
+    noise: float In nN. or ndarray (of size z) of noise to be added at each point.
+    z: ndarray. In nm. the range over which the function will generate the data
+    z_0: float. In nm. A z offset. Optional, default is no offset.
+    
+    Returns:
+    --------
+    data: ndarray (of size z) of the corresponding new Lennard Jones + vdW M1, 
+        with noise, assuming a normal distribution of the noise
+    
+    '''
+    
+    z_shift = z - z_0
+    
+    perfect_data = factor/z_shift**3 - 2*hamaker*radius**3/(3*z_shift**2*(z_shift+2*radius)**2)
+    
+    #add some noise
+    noisy_m1_data = perfect_data + scipy.stats.norm.rvs(loc=0, scale = noise, size = len(z))
+    
+    #I know this will create something ~ nN
+    return noisy_m1_data
+
+def simulate_data_cone(factor, hamaker, theta, noise, z, z_0 = 0):
+    
+    '''
+    generates noisy force data which includes the new repulsive term from the Lennard Jones force (~z^-3) 
+    and a physically motivated vdW force based on a simple sphere above a plane.
+    
+    Inputs:
+    -------
+    factor: float. In aJ/nm^2. The repulsive term factor. 
+        Equal to epsilon*sigma^2 in the LJ model, but even less physically motivated. 
+    hamaker: float. In aJ. Hamaker's constant for the specific tip and sample materials.
+    theta: float. In degrees. half-angle opening of the tip.
+    noise: float In nN. or ndarray (of size z) of noise to be added at each point.
+    z: ndarray. In nm. the range over which the function will generate the data
+    z_0: float. In nm. A z offset. Optional, default is no offset.
+    
+    Returns:
+    --------
+    data: ndarray (of size z) of the corresponding new Lennard Jones + vdW M1, 
+        with noise, assuming a normal distribution of the noise
+    
+    '''
+    theta_rad = np.deg2rad(theta)
+    
+    perfect_data = factor/z**3 - hamaker*np.tan(theta_rad)**2/(6*z)
+    
+    #add some noise
+    noisy_m2_data = perfect_data + scipy.stats.norm.rvs(loc=0, scale = noise, size = len(z))
+    
+    #I know this will create something ~ nN
+    return noisy_m2_data
+
+
+def simulate_data_cone_sph(factor, hamaker, radius, theta, noise, z, z_0=0):
+    
+    '''
+    generates noisy force data which includes the new repulsive term from the Lennard Jones force (~z^-3) 
+    and a physically motivated vdW force.
+    
+    Inputs:
+    -------
+    epsilon: float. In nV. The depth of the well in the L-J theory. 
+    sigma: float. In nm. The distance to 0 potential in the L-J theory.
+    hamaker: float. In nV. Hamaker's constant for the specific tip and sample materials.
+    radius: float. In nm. radius of the sphere of the tip.
+    theta: float. In degrees. half-angle opening of the conical part of the tip. 
+    noise: float In nN. or ndarray (of size z) of noise to be added at each point.
+    z: ndarray. In nm. the range over which the function will generate the data
+    z_0: float. In nm. A z offset. Optional, default is no offset.
+    
+    Returns:
+    --------
+    data: ndarray (of size z) of the corresponding new Lennard Jones + vdW M3, 
+        with noise, assuming a normal distribution of the noise
+    
+    '''
+    theta_rad = np.deg2rad(theta)
+    
+    perfect_data = factor/z**3 - hamaker/6*(radius/z**2 
+                                    + radius*(1-np.sin(theta_rad))/(z*(z+radius*(1-np.sin(theta_rad)))) 
+                                    + np.tan(theta_rad)**2/(z+radius*(1-np.sin(theta_rad))))
+    
+    #add some noise
+    noisy_m3_rep_data = perfect_data + scipy.stats.norm.rvs(loc=0, scale = noise, size = len(z))
+    
+    #I know this will create something ~ nN
+    return noisy_m3_rep_data
