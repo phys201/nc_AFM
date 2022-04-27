@@ -4,12 +4,12 @@
 import numpy as np
 import pymc3 as pm
 
-def len_jon(z_input, force_data, noise, fit_z0 = False, prior_type = 'Jeffreys', epsilon_init = 1, sigma_init = 1, epsilon_lower = 0.01, epsilon_upper = 100, sigma_lower = 0.01, sigma_upper = 100):
+def len_jon(z_input, force_data, noise, fit_z0 = False, epsilon_init = 1, sigma_init = 1, epsilon_mean = 25, epsilon_var = 25, sigma_mean = 25, sigma_var = 25):
     
     '''
     generates Lennard Jones force model
     
-    Inputs:
+    Required Inputs (3):
     -------
     z: ndarray. [in nm]. x data of the observed force data. 
     force_data: ndarray. [in nN] Observed (noisy) force data to fit to a purely Lennard Jones model
@@ -22,11 +22,13 @@ def len_jon(z_input, force_data, noise, fit_z0 = False, prior_type = 'Jeffreys',
     epsilon_init: float. [in aJ] starting point for epsilon. default = 1.
     sigma_init: float. [in nm] starting point for sigma. default = 1. 
     
-    epsilon_lower: float. [in aJ] The minimum value for epsilon in the prior (the depth of the well). default = e-2.
-    epsilon_upper: float. [in aJ] The maximum value for epsilon in the prior (the depth of the well). default = e2.
+    epsilon_mean: float. [in aJ] The mean value for epsilon in the prior (the depth of the well). default = 25.
+    epsilon_var: float. [in aJ] The normal variation for epsilon in the prior (the depth of the well). default = 25.
+                    The normal mean and variation are converted to alpha and beta for a Gamma distribution.
     
-    sigma_lower: float. [in nm] The minimum value for sigma in the prior (the size of the well). default = e-2.
-    sigma_upper: float. [in nm] The maximum value for sigma in the prior (the size of the well). default = e2.
+    sigma_mean: float. [in nm] The mean value for sigma in the prior (the size of the well). default = 25.
+    sigma_var: float. [in nm] The normal variation for sigma in the prior (the size of the well). default = 25.
+                    The normal mean and variance are converted to alpha and beta for a Gamma distribution.
     
     Returns:
     --------
@@ -36,25 +38,17 @@ def len_jon(z_input, force_data, noise, fit_z0 = False, prior_type = 'Jeffreys',
     lj_model = pm.Model()
     with lj_model:
 
-        if prior_type == 'Jeffreys':
-            #Jefferys prior
-            logepsilon = pm.Uniform('logepsilon', np.log10(epsilon_lower), np.log10(epsilon_upper), testval = np.log10(epsilon_init))
-            logsigma = pm.Uniform('logsigma', np.log10(sigma_lower), np.log10(sigma_upper), testval = np.log10(sigma_init))
-        
-            #convert to reg parameters:
-            epsilon = pm.Deterministic('epsilon', 10**(logepsilon))
-            sigma = pm.Deterministic('sigma', 10**(logsigma))
-        
-        elif prior_type == 'uniform' or 'Uniform':
-            epsilon = pm.Uniform('epsilon', epsilon_lower, epsilon_upper, testval = epsilon_init)
-            sigma = pm.Uniform('epsilon', sigma_lower, sigma_upper, testval = sigma_init)
+        if (epsilon_mean >= epsilon_var) and (sigma_mean >= sigma_var):
+            epsilon = pm.Gamma('epsilon', mu = epsilon_mean, sigma = epsilon_var, testval = epsilon_init)
+            sigma = pm.Gamma('sigma', mu = sigma_mean, sigma = sigma_var, testval = sigma_init)
             
         else:
-            return ValueError('prior_type does not correspond to a defined prior type. Options: Jeffreys, uniform')
+            raise ValueError('variation is larger than mean for either epsilon or sigma.')
         
         if fit_z0 == True:
-            #Should make this a truncated normal with the min being where z starts to go negative.
-            z_0 = pm.Normal('z offset', mu=0, sigma = 1, testval = 0)
+            #normal centered so that the last data point is 1nm above the surface
+            #truncated so that there is 0 probability z can go negative.
+            z_0 = pm.TruncatedNormal('z offset', mu=z_input[0]-1, sigma = 1, upper = z_input[0], testval = z_input[0]-2)
             z = z_input - z_0
         else:
             z = z_input
@@ -67,12 +61,12 @@ def len_jon(z_input, force_data, noise, fit_z0 = False, prior_type = 'Jeffreys',
     
     return lj_model
 
-def vdw_sph(z_input, force_data, noise, hamaker, fit_z0 = False, prior_type = 'Jeffreys', rep_factor_init = 100, radius_init = 25, rep_factor_lower = 0.1, rep_factor_upper = 10000, radius_var = 20):
+def vdw_sph(z_input, force_data, noise, hamaker, fit_z0 = False, rep_factor_init = 50, radius_init = 30, rep_factor_mean = 25, rep_factor_var = 25, radius_var = 10):
     
     '''
     Generates a force model which includes a repulsive (~1/z^3) and an attracrive vdW force derived from a spherical tip.
     
-    Inputs:
+    Required Inputs (4):
     -------
     z_input: ndarray. [in nm]. x data of the observed force data. 
     force_data: ndarray. [in nN] Observed (noisy) force data to fit to a purely Lennard Jones model
@@ -83,14 +77,15 @@ def vdw_sph(z_input, force_data, noise, hamaker, fit_z0 = False, prior_type = 'J
     ---------------
     prior_type: string. 'Jefferys' to use a Jeffreys prior, 'uniform' to use a uniform prior. Prior defines the prior the repulsive factor 'rep_factor'. Default is Jeffreys.
     
-    rep_factor_init: float. [in aJ*nm^2] starting point for epsilon. default = 100.
+    rep_factor_init: float. [in aJ*nm^2] starting point for epsilon. default = 50.
     radius_init: float. [in nm] starting point for radius. default = 25.
     theta_init: float. [in degrees] starting point for hanf-angle opening of the conical tip. default = 35.
     
-    rep_factor_lower: float. [in aJ*nm^2] The minimum value for repulsive factor in the prior (the depth of the well). 
-                    default = e-1.
-    rep_factor_upper: float. [in aJ*nm^2] The maximum value for repuslive in the prior (the depth of the well). 
-                    default = e5.
+    rep_factor_mean: float. [in aJ*nm^2] The mean value for repulsive factor in the prior. 
+                    default = 25.
+    rep_factor_var: float. [in aJ*nm^2] The normal variation for repuslive in the prior.  
+                    default = 25.
+                    The normal mean and variance will be converted to alpha and beta for a gamma distribution prior.
     
     radius_var: float. [in nm] The variance for the radius. Prior defined by a gamma function. 
                     The mean and the variance will be converted to alpha and beta for a gamma dist. 
@@ -105,25 +100,19 @@ def vdw_sph(z_input, force_data, noise, hamaker, fit_z0 = False, prior_type = 'J
 
     with m1_z3_rep:
         
-        if prior_type == 'Jeffreys':
-            #Jefferys prior
-            log_rep_factor = pm.Uniform('log_rep_factor', np.log10(rep_factor_lower), np.log10(rep_factor_upper), testval = np.log10(rep_factor_init))
-        
-            #convert to reg parameters:
-            rep_factor = pm.Deterministic('rep_factor', 10**(log_rep_factor))
-        
-        elif prior_type == 'uniform' or 'Uniform':
-            rep_factor = pm.Uniform('rep_factor', rep_factor_lower, rep_factor_upper, testval = rep_factor_init)
+        if (rep_factor_mean >= rep_factor_var):
+            rep_factor = pm.Gamma('rep factor', mu = rep_factor_mean, sigma = rep_factor_var, testval = rep_factor_init)
             
         else:
-            return ValueError('prior_type does not correspond to a defined prior type. Options: Jeffreys, uniform')
+            raise ValueError('variation is larger than mean for the repulsive factor.')
 
         #Gamma prior on radius
         radius = pm.Gamma('radius', mu = radius_init, sigma = radius_var, testval = radius_init)
         
         if fit_z0 == True:
-            #Should make this a truncated normal with the min being where z starts to go negative.
-            z_0 = pm.Normal('z offset', mu=0, sigma = 1, testval = 0)
+            #normal centered so that the last data point is 1nm above the surface
+            #truncated so that there is 0 probability z can go negative.
+            z_0 = pm.TruncatedNormal('z offset', mu=z_input[0]-1, sigma = 1, upper = z_input[0], testval = z_input[0]-2)
             z = z_input - z_0
         else:
             z = z_input
@@ -136,13 +125,13 @@ def vdw_sph(z_input, force_data, noise, hamaker, fit_z0 = False, prior_type = 'J
     
     return m1_z3_rep
 
-def vdw_cone(z_input, force_data, noise, hamaker, fit_z0 = False, prior_type = 'Jeffreys', rep_factor_init = 100, radius_init = 25, rep_factor_lower = 0.1, rep_factor_upper = 10000, radius_var = 20):
+def vdw_cone(z_input, force_data, noise, hamaker, fit_z0 = False, rep_factor_init = 50, theta_init = 40, rep_factor_mean = 25, rep_factor_var = 25, theta_var = 15):
     
     '''
     Generates a force model which includes a modified repulsive term from the Lennard Jones force (~1/z^3) derived from squaring the highest power of z in the vdw potential and an attracrive vdW force derived from by a conical tip.
     Notice: this could maybe be 1/z^2, but 1/z^3 seems to work 
     
-    Inputs:
+    Required Inputs (4):
     -------
     z_input: ndarray. [in nm]. x data of the observed force data. 
     force_data: ndarray. [in nN] Observed (noisy) force data to fit to a purely Lennard Jones model
@@ -154,17 +143,16 @@ def vdw_cone(z_input, force_data, noise, hamaker, fit_z0 = False, prior_type = '
     prior_type: string. 'Jefferys' to use a Jeffreys prior, 'uniform' to use a uniform prior. Prior defines the prior the Lennard Jones repulsive factor 'lj_rep'. Default is Jeffreys.
     
     rep_factor_init: float. [in aJ*nm^2] starting point for epsilon. default = 100.
-    radius_init: float. [in nm] starting point for radius. default = 25.
     theta_init: float. [in degrees] starting point for hanf-angle opening of the conical tip. default = 35.
     
-    rep_factor_lower: float. [in aJ*nm^2] The minimum value for repulsive factor in the prior (the depth of the well). 
-                    default = e-1.
-    rep_factor_upper: float. [in aJ*nm^2] The maximum value for repuslive in the prior (the depth of the well). 
-                    default = e5.
+    rep_factor_mean: float. [in aJ*nm^2] The mean value for repulsive factor in the prior. 
+                    default = 25.
+    rep_factor_var: float. [in aJ*nm^2] The normal variation for repuslive in the prior. 
+                    default = 25.
+                    The normal mean and variance are converted to alpha and beta for a gamma distribution prior.
     
-    radius_var: float. [in nm] The variance for the radius. Prior defined by a gamma function. 
-                    The mean and the variance will be converted to alpha and beta for a gamma dist. 
-                    Default = 20
+    theta_var: float. [in degrees] The variance for the half-angle opening. Prior defined by a normal distribution.
+                    default = 15
     
     Returns:
     --------
@@ -175,27 +163,21 @@ def vdw_cone(z_input, force_data, noise, hamaker, fit_z0 = False, prior_type = '
 
     with m2_z3_rep:
         
-        if prior_type == 'Jeffreys':
-            #Jefferys prior
-            log_rep_factor = pm.Uniform('log_rep_factor', np.log10(rep_factor_lower), np.log10(rep_factor_upper), testval = np.log10(rep_factor_init))
-        
-            #convert to reg parameters:
-            rep_factor = pm.Deterministic('rep_factor', 10**(log_rep_factor))
-        
-        elif prior_type == 'uniform' or 'Uniform':
-            rep_factor = pm.Uniform('rep_factor', rep_factor_lower, rep_factor_upper, testval = rep_factor_init)
+        if (rep_factor_mean >= rep_factor_var):
+            rep_factor = pm.Gamma('rep factor', mu = rep_factor_mean, sigma = rep_factor_var, testval = rep_factor_init)
             
         else:
-            return ValueError('prior_type does not correspond to a defined prior type. Options: Jeffreys, uniform')
-
+            raise ValueError('variation is larger than mean for the repulsive factor.')
+        
         #truncated normal on theta
         theta = pm.TruncatedNormal('theta', mu=theta_init, sigma=theta_var, lower=0, upper=90, testval=theta_init)
 
         theta_rad = np.deg2rad(theta)
         
         if fit_z0 == True:
-            #Should make this a truncated normal with the min being where z starts to go negative.
-            z_0 = pm.Normal('z offset', mu=0, sigma = 1, testval = 0)
+            #normal centered so that the last data point is 1nm above the surface
+            #truncated so that there is 0 probability z can go negative.
+            z_0 = pm.TruncatedNormal('z offset', mu=z_input[0]-1, sigma = 1, upper = z_input[0], testval = z_input[0]-2)
             z = z_input - z_0
         else:
             z = z_input
@@ -208,12 +190,12 @@ def vdw_cone(z_input, force_data, noise, hamaker, fit_z0 = False, prior_type = '
     
     return m2_z3_rep
 
-def vdw_cone_sph(z_input, force_data, noise, hamaker, fit_z0 = False, prior_type = 'Jeffreys', rep_factor_init = 100, radius_init = 25, theta_init = 35, rep_lower = 0.1, rep_upper = 10**5, radius_var = 10, theta_var = 20):
+def vdw_cone_sph(z_input, force_data, noise, hamaker, fit_z0 = False, rep_factor_init = 50, radius_init = 30, theta_init = 40, rep_factor_mean = 25, rep_factor_var = 25, radius_var = 10, theta_var = 15):
     
     '''
     Generates a force model which includes the repulsive term from the Lennard Jones force that goes as ~ 1/z^3 and vdW force for the attractive term physically motivated by a sphere at the end of a cone.
     
-    Inputs:
+    Required Inputs (4):
     -------
     z: ndarray. [in nm]. x data of the observed force data. 
     force_data: ndarray. [in nN] Observed (noisy) force data to fit to a purely Lennard Jones model
@@ -224,18 +206,19 @@ def vdw_cone_sph(z_input, force_data, noise, hamaker, fit_z0 = False, prior_type
     ---------------
     prior_type: string. 'Jefferys' to use a Jeffreys prior, 'uniform' to use a uniform prior. Prior defines the prior the Lennard Jones repulsive factor 'lj_rep'. Default is Jeffreys.
     
-    rep_factor_init: float. [in aJ*nm^12] starting point for th repulsive factor. default = 100.
-    radius_init: float. [in nm] starting point for radius. default = 25.
-    theta_init: float. [in degrees] starting point for hanf-angle opening of the conical tip. default = 35.
+    rep_factor_init: float. [in aJ*nm^12] starting point for th repulsive factor. default = 50.
+    radius_init: float. [in nm] starting point for radius. default = 30.
+    theta_init: float. [in degrees] starting point for hanf-angle opening of the conical tip. default = 40.
     
-    rep_factor_lower: float. [in aJ*nm^2] The minimum value for repulsive factor in the prior (the depth of the well). 
-                    default = e-1.
-    rep_factor_upper: float. [in aJ*nm^2] The maximum value for repuslive in the prior (the depth of the well). 
-                    default = e5.
+    rep_factor_mean: float. [in aJ*nm^2] The mean value for repulsive factor in the prior. 
+                    default = 25.
+    rep_factor_var: float. [in aJ*nm^2] The normal variation for repuslive in the prior. 
+                    default = 25.
+                    The mean and variance will be converted to alpha and beta for a gamma distribution prior.
     
     radius_var: float. [in nm] The variance for the radius. Prior defined by a gamma function. 
-                    The mean and the variance will be converted to alpha and beta for a gamma dist. 
-                    Default = 20
+                    The mean and the variance will be converted to alpha and beta for a gamma distribution prior. 
+                    Default = 10
     
     theta_var: float. [in degrees]. Standard deviation of the prior on of the half-angle opening. 
                     The distribition is centered at theta_init. Default variation = 15.
@@ -249,18 +232,11 @@ def vdw_cone_sph(z_input, force_data, noise, hamaker, fit_z0 = False, prior_type
 
     with m3_z3_model:
         
-        if prior_type == 'Jeffreys':
-            #Jefferys prior
-            log_rep = pm.Uniform('log_lj_rep', np.log10(rep_lower), np.log10(rep_upper), testval = np.log10(rep_init))
-        
-            #convert to reg parameters:
-            rep = pm.Deterministic('lj_rep', 10**(log_rep))
-        
-        elif prior_type == 'uniform' or 'Uniform':
-            rep = pm.Uniform('lj_rep', rep_lower, rep_upper, testval = rep_init)
+        if (rep_factor_mean >= rep_factor_var):
+            rep_factor = pm.Gamma('rep factor', mu = rep_factor_mean, sigma = rep_factor_var, testval = rep_factor_init)
             
         else:
-            return ValueError('prior_type does not correspond to a defined prior type. Options: Jeffreys, uniform')
+            raise ValueError('variation is larger than mean for the repulsive factor.')
 
         #Gamma prior on radius
         radius = pm.Gamma('radius', mu = radius_init, sigma = radius_var, testval = radius_init)
@@ -271,14 +247,15 @@ def vdw_cone_sph(z_input, force_data, noise, hamaker, fit_z0 = False, prior_type
         theta_rad = np.deg2rad(theta)
         
         if fit_z0 == True:
-            #Should make this a truncated normal with the min being where z starts to go negative.
-            z_0 = pm.Normal('z offset', mu=0, sigma = 1, testval = 0)
+            #normal centered so that the last data point is 1nm above the surface
+            #truncated so that there is 0 probability z can go negative.
+            z_0 = pm.TruncatedNormal('z offset', mu=z_input[0]-1, sigma = 1, upper = z_input[0], testval = z_input[0]-2)
             z = z_input - z_0
         else:
             z = z_input
 
         #model
-        force_model = rep/z**3 - hamaker/6*( radius/z**2 
+        force_model = rep_factor/z**3 - hamaker/6*( radius/z**2 
                                         + radius*(1-np.sin(theta_rad))/(z*(z+ radius*(1-np.sin(theta_rad)) )) 
                                         + (np.tan(theta_rad))**2/(z+ radius*(1-np.sin(theta_rad)) ) 
                                         )
