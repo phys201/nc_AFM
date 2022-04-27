@@ -5,13 +5,14 @@ import ncafm
 ```
 
 Author: Alyson Spitzig, Houchen Li, Talha Rehman
+
 Licence: GNU General Public License v3
 
 
 
 This package is meant to analyze the data acquired from non-contact Atomic Force Microscopy (nc-AFM). You could use this package to do Bayesian analysis about the parameters of your own nc-AFM measurements.
 
-This package is mainly based on pymc3. We have several built-in models(Lennard-Jones, vdW force with different tip geometry, electrostatic forces etc.) for you to select to 
+This package is mainly based on pymc3. We have several built-in models(Lennard-Jones, vdW force with different tip geometry, electrostatic forces etc.) for you to select to fitting!
 
 
 Its details functions are including :
