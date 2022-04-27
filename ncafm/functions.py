@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 import scipy.stats
 
 def df2force(z, df_data, a, k, f_0):
@@ -108,12 +109,12 @@ def ptp2variation(ptp, averaging_time, sampling_rate = 10000, plot_high_freq = F
     
     rolling_ave_noise = np.convolve(test_noise, np.ones([average_over_n_indices]), 'valid')/average_over_n_indices
     
-    averaged_noise = np.abs(np.mean(rolling_ave_noise))
+    averaged_noise = np.sqrt(np.mean(rolling_ave_noise**2))
     
     return averaged_noise
 
 
-def simulate_lj_data(epsilon, sigma, noise, z, z_0=0):
+def simulate_lj_data(epsilon, sigma, noise, z_input, z_0=0):
     
     '''
     generates noisy Lennard Jones force data
@@ -132,16 +133,22 @@ def simulate_lj_data(epsilon, sigma, noise, z, z_0=0):
         assuming a normal distribution of the noise
     
     '''
+    z = z_input - z_0
     
     perfect_data = 4*epsilon*(12*sigma**12/z**13 - 6*sigma**6/z**7)
     
+    if isinstance(z_input, np.ndarray) == True:
+        length = len(z_input)
+    else:
+        length = 1
+    
     #add some noise
-    noisyLJ_data = perfect_data + scipy.stats.norm.rvs(loc=0, scale = noise, size = len(z))
+    noisyLJ_data = perfect_data + scipy.stats.norm.rvs(loc=0, scale = noise, size = length)
     
     #I know this will create something ~ nN
     return noisyLJ_data
 
-def simulate_data_sph(factor, hamaker, radius, noise, z, z_0=0):
+def simulate_data_sph(factor, hamaker, radius, noise, z_input, z_0=0):
     
     '''
     generates noisy force data which includes the new repulsive term from the Lennard Jones force (~z^-3) 
@@ -164,17 +171,23 @@ def simulate_data_sph(factor, hamaker, radius, noise, z, z_0=0):
     
     '''
     
-    z_shift = z - z_0
+    z = z_input - z_0
     
-    perfect_data = factor/z_shift**3 - 2*hamaker*radius**3/(3*z_shift**2*(z_shift+2*radius)**2)
+    perfect_data = factor/z**3 - 2*hamaker*radius**3/(3*z**2*(z+2*radius)**2)
+    
+    #allows us to calculate one value
+    if isinstance(z_input, np.ndarray) == True:
+        length = len(z_input)
+    else:
+        length = 1
     
     #add some noise
-    noisy_m1_data = perfect_data + scipy.stats.norm.rvs(loc=0, scale = noise, size = len(z))
+    noisy_m1_data = perfect_data + scipy.stats.norm.rvs(loc=0, scale = noise, size = length)
     
     #I know this will create something ~ nN
     return noisy_m1_data
 
-def simulate_data_cone(factor, hamaker, theta, noise, z, z_0 = 0):
+def simulate_data_cone(factor, hamaker, theta, noise, z_input, z_0 = 0):
     
     '''
     generates noisy force data which includes the new repulsive term from the Lennard Jones force (~z^-3) 
@@ -198,16 +211,24 @@ def simulate_data_cone(factor, hamaker, theta, noise, z, z_0 = 0):
     '''
     theta_rad = np.deg2rad(theta)
     
+    z = z_input - z_0
+    
     perfect_data = factor/z**3 - hamaker*np.tan(theta_rad)**2/(6*z)
     
+    #allows us to calculate one value
+    if isinstance(z_input, np.ndarray) == True:
+        length = len(z_input)
+    else:
+        length = 1
+    
     #add some noise
-    noisy_m2_data = perfect_data + scipy.stats.norm.rvs(loc=0, scale = noise, size = len(z))
+    noisy_m2_data = perfect_data + scipy.stats.norm.rvs(loc=0, scale = noise, size = length)
     
     #I know this will create something ~ nN
     return noisy_m2_data
 
 
-def simulate_data_cone_sph(factor, hamaker, radius, theta, noise, z, z_0=0):
+def simulate_data_cone_sph(factor, hamaker, radius, theta, noise, z_input, z_0=0):
     
     '''
     generates noisy force data which includes the new repulsive term from the Lennard Jones force (~z^-3) 
@@ -232,12 +253,20 @@ def simulate_data_cone_sph(factor, hamaker, radius, theta, noise, z, z_0=0):
     '''
     theta_rad = np.deg2rad(theta)
     
+    z = z_input - z_0
+    
     perfect_data = factor/z**3 - hamaker/6*(radius/z**2 
                                     + radius*(1-np.sin(theta_rad))/(z*(z+radius*(1-np.sin(theta_rad)))) 
                                     + np.tan(theta_rad)**2/(z+radius*(1-np.sin(theta_rad))))
     
+    #allows us to calculate one value
+    if isinstance(z_input, np.ndarray) == True:
+        length = len(z_input)
+    else:
+        length = 1
+    
     #add some noise
-    noisy_m3_rep_data = perfect_data + scipy.stats.norm.rvs(loc=0, scale = noise, size = len(z))
+    noisy_m3_rep_data = perfect_data + scipy.stats.norm.rvs(loc=0, scale = noise, size = length)
     
     #I know this will create something ~ nN
     return noisy_m3_rep_data
