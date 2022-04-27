@@ -9,4 +9,5 @@ setup(name='ncafm',
       author_email='alyson.spitzig@gmail.com', 'houchenli@g.harvard.edu', 'talha@g.harvard.edu',
       license='GPLv3',
       packages=['ncafm'],
-      install_requires=['numpy', 'pymc3', 'arviz', 'seasborn', 'nose'])
+      test_suite='nose.collector'
+      install_requires=['numpy', 'pymc3', 'arviz', 'seasborn', 'nose'],)
