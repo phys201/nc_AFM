@@ -270,7 +270,7 @@ def vdw_ele(z_input, force_data, noise, voltage, rep_factor, radius_init, radius
     
     '''
     generates model for the force that includes a physically motivated vdw term and electrostatics term. 
-    The paramters in the vdW force should be fit at the CPD voltage (the votlage that minimizes the electrostatics forces) and be input. Only radius should be left as a parameter from the vdW forces. 
+    The paramters in the vdW force should be fit at the CPD voltage (the voltage that minimizes the electrostatics forces) and be input. Only radius should be left as a parameter from the vdW forces. 
     
    Inputs:
     -------
@@ -279,7 +279,7 @@ def vdw_ele(z_input, force_data, noise, voltage, rep_factor, radius_init, radius
     noise: float or ndarray (of size force_data) [in nN] 
     hamaker: float. Hamaker's Constant. [in aJ] The constant is defined for each pair of materials. User must calculate the value. 
     rep_factor: float. [in aJ/nm^2] determined by fitting to the appropriate model at CPD voltage.
-    theta: float. [in degrees]. Onlt required if vdw_type = 'cone' or 'sph+cone'. 
+    theta: float. [in degrees]. Only required if vdw_type = 'cone' or 'sph+cone'. 
     
     radius_init: best fit value of the radius from the vdw fitting at CPD voltage
     radius_var: best fit variation of the radius from the vdw fitting at CPD voltage. 
