@@ -10,5 +10,6 @@ setup(name='ncafm',
       license='GPLv3',
       packages=['ncafm'],
       test_suite='nose.collector'
+      tests_require=['nose']
       install_requires=['numpy', 'pymc3', 'arviz', 'seasborn', 'nose'],)
 
