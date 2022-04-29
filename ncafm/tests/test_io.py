@@ -27,3 +27,8 @@ class TestDataImport(TestCase):
         
         first_col = test_data.columns[0]
         self.assertEqual(first_col, 'z')
+        
+class TestGetFilePath(TestCase):
+    def test_get_example_data_file_path(self):
+        test_path = io.get_example_data_file_path(filename, data_dir = 'ncafm/example_data')
+        self.assertTrue(isinstance(test_path,Path)) 
