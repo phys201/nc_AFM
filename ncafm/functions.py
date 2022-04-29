@@ -272,7 +272,7 @@ def simulate_data_cone_sph(factor, hamaker, radius, theta, noise, z_input, z_0=0
     return noisy_m3_rep_data
 
 
-def simulate_ele(factor, radius, voltage, noise, z_input, z_0=0, vdw_type = 'sph', hamaker, theta):
+def simulate_ele(theta, factor, radius, voltage, noise, z_input, z_0=0, vdw_type = 'sph', hamaker):
     
     '''
     generates noisy force data which includes physically motivated vdw term and electrostatics term.
