@@ -48,3 +48,9 @@ class TestvdWConeSphModel(TestCase):
         dummy_noisy_force = dummy_force*10**9 + scipy.stats.norm.rvs(loc=0, scale = noise, size = len(dummy_z)-1)
         vdw_cone_sph_model = ml.vdw_cone_sph(dummy_z[:-1], dummy_noisy_force, noise, dummy_hamaker)
         self.assertTrue(isinstance(vdw_cone_sph_model, pm.Model))
+
+class TestvdWEleModel(TestCase):
+    def test_returns_model_class(self):
+        dummy_noisy_force = dummy_force*10**9 + scipy.stats.norm.rvs(loc=0, scale = noise, size = len(dummy_z)-1)
+        vdw_ele_model = ml.vdw_ele(dummy_z[:-1], dummy_noisy_force, noise, dummy_hamaker)
+        self.assertTrue(isinstance(vdw_ele_model, pm.Model))
