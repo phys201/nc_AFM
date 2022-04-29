@@ -20,6 +20,7 @@ dummy_sigma = 1
 dummy_xi = 1
 dummy_hamaker = 1
 dummy_radius = 1
+dummy_voltage = 1
 dummy_theta = 45
     
 class Testdf2force(TestCase):
@@ -97,4 +98,37 @@ class TestSimulate_data_cone_sph(TestCase):
         
         dummy_cone_sph = dummy_xi/z_test**3 - dummy_hamaker/6*(term1 + term2 + term3)
         cone_sph_from_fn = fn.simulate_data_cone_sph(dummy_xi, dummy_hamaker, dummy_radius, dummy_theta, noise, z_test)
-        self.assertEqual(dummy_cone_sph, cone_sph_from_fn) 
+        self.assertEqual(dummy_cone_sph, cone_sph_from_fn)
+        
+class TestSimulate_data_ele(TestCase):
+    def test_force_magnitude_sph(self):
+        z_test = dummy_z[0]*10**9
+        noise = 0
+        vdw_force = - 2*dummy_hamaker*dummy_radius**3/(3*z_test**2*(z_test+2*dummy_radius)**2)
+        
+        dummy_ele = dummy_xi/z_test**3 + vdw_force - 9*10**36*dummy_voltage**2*(np.pi*dummy_radius**2)**2/z_test**4
+        ele_from_fn = fn.simulate_data_ele(dummy_theta, dummy_radius, dummy_voltage, noise, z_test, dummy_hamaker, dummy_xi, vdw_type = 'sph')
+        self.assertEqual(dummy_ele, ele_from_fn)
+    
+    
+    def test_force_magnitude_cone(self):
+        z_test = dummy_z[0]*10**9
+        noise = 0
+        vdw_force = - dummy_hamaker*np.tan(np.deg2rad(dummy_theta))**2/(6*z_test) 
+
+        dummy_ele = dummy_xi/z_test**3 + vdw_force - 9*10**36*dummy_voltage**2*(np.pi*dummy_radius**2)**2/z_test**4
+        ele_from_fn = fn.simulate_data_ele(dummy_theta, dummy_radius, dummy_voltage, noise, z_test, dummy_hamaker, dummy_xi, vdw_type = 'cone')
+        self.assertEqual(dummy_ele, ele_from_fn)
+
+
+    def test_force_magnitude_sph_cone(self):
+        z_test = dummy_z[0]*10**9
+        noise = 0
+        term1 = dummy_radius/z_test**2
+        term2 = dummy_radius*(1-np.sin(np.deg2rad(dummy_theta)))/(z_test*(z_test+dummy_radius*(1-np.sin(np.deg2rad(dummy_theta))))) 
+        term3 = np.tan(np.deg2rad(dummy_theta))**2/(z_test+dummy_radius*(1-np.sin(np.deg2rad(dummy_theta))))
+        vdw_force = - dummy_hamaker/6*(term1 + term2 + term3)        
+
+        dummy_ele = dummy_xi/z_test**3 + vdw_force - 9*10**36*dummy_voltage**2*(np.pi*dummy_radius**2)**2/z_test**4
+        ele_from_fn = fn.simulate_data_ele(dummy_theta, dummy_radius, dummy_voltage, noise, z_test, dummy_hamaker, dummy_xi, vdw_type = 'sph+cone')
+        self.assertEqual(dummy_ele, ele_from_fn)
