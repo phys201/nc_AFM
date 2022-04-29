@@ -266,7 +266,7 @@ def vdw_cone_sph(z_input, force_data, noise, hamaker, fit_z0 = False, rep_factor
     return m3_z3_model
 
     
-def vdw_ele(z_input, force_data, noise, voltage, rep_factor, radius_init, radius_var, theta=40, fit_z0 = False, vdw_type = 'sph'):
+def vdw_ele(z_input, force_data, noise, hamaker, voltage, rep_factor, radius_init, radius_var, theta=40, fit_z0 = False, vdw_type = 'sph'):
     
     '''
     generates model for the force that includes a physically motivated vdw term and electrostatics term. 
@@ -299,6 +299,13 @@ def vdw_ele(z_input, force_data, noise, voltage, rep_factor, radius_init, radius
         #uniform on radius
         radius = pm.Gamma('radius', mu=radius_init, sigma = radius_var, testval = radius_init)
         
+        if fit_z0 == True:
+            #Should make this a truncated normal with the min being where z starts to go negative.
+            z_0 = pm.Normal('z offset', mu=0, sigma = 1, testval = 0)
+            z = z_input - z_0
+        else:
+            z = z_input
+        
         if vdw_type == 'sph':
             vdw_force = - 2*hamaker*radius**3/(3*z**2*(z+2*radius)**2)
             
@@ -313,15 +320,11 @@ def vdw_ele(z_input, force_data, noise, voltage, rep_factor, radius_init, radius
         else:
             return ValueError('vdw_type does not correspond to a defined model type. Options: sph, cone, sph+cone')
         
-        if fit_z0 == True:
-            #Should make this a truncated normal with the min being where z starts to go negative.
-            z_0 = pm.Normal('z offset', mu=0, sigma = 1, testval = 0)
-            z = z_input - z_0
-        else:
-            z = z_input
+        
+        epsilon_0 = 8.854*10**-3 #nN/V^2
         
         #model
-        force_model = rep/z**3 + vdw_force - 9*10**36*voltage**2*(pi*radius**2)**2/z**4
+        force_model = rep_factor/z**3 + vdw_force - np.pi*epsilon_0*voltage**2*radius**2/z**4
 
         # Likelihood of observations (i.e. noise around model)
         measurements = pm.Normal('force', mu=force_model, sigma=noise, observed=force_data)
