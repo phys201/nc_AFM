@@ -2,8 +2,8 @@
 from unittest import TestCase
 
 import numpy as np
-import ncafm.model as model
-import ncafm.functions as fcn
+import ncafm.model as ml
+import ncafm.functions as fn
 import scipy.stats
 import pymc3 as pm
 
@@ -20,28 +20,37 @@ dummy_df = const1*((const2)**2/dummy_z**3 - (const2)**1/dummy_z**2)
 
 noise = 0.1
 
-dummy_force = fcn.df2force(dummy_z, dummy_df, dummy_a, dummy_k, dummy_f0) 
+dummy_force = fn.df2force(dummy_z, dummy_df, dummy_a, dummy_k, dummy_f0) 
 
 dummy_hamaker = 1
 
 class TestLenJonModel(TestCase):
     def test_returns_model_class(self):
         dummy_noisy_force = dummy_force*10**9 + scipy.stats.norm.rvs(loc=0, scale = noise, size = len(dummy_z)-1)
-        lj_model = model.len_jon(dummy_z[:-1], dummy_noisy_force, noise)
-        
+        lj_model = ml.len_jon(dummy_z[:-1], dummy_noisy_force, noise)  
         self.assertTrue(isinstance(lj_model, pm.Model))
         
-class TestvdWLenJonModel(TestCase):
+        
+class TestvdWSphModel(TestCase):
     def test_returns_model_class(self):
         dummy_noisy_force = dummy_force*10**9 + scipy.stats.norm.rvs(loc=0, scale = noise, size = len(dummy_z)-1)
-        vdw_lj_model = model.vdw_lj_rep(dummy_z[:-1], dummy_noisy_force, noise, dummy_hamaker)
+        vdw_sph_model = ml.vdw_sph(dummy_z[:-1], dummy_noisy_force, noise, dummy_hamaker)
+        self.assertTrue(isinstance(vdw_sph_model, pm.Model))
         
-        self.assertTrue(isinstance(vdw_lj_model, pm.Model))
-        
-        
-class TestvdWmodRepModel(TestCase):
+class TestvdWConeModel(TestCase):
     def test_returns_model_class(self):
         dummy_noisy_force = dummy_force*10**9 + scipy.stats.norm.rvs(loc=0, scale = noise, size = len(dummy_z)-1)
-        vdw_rep_model = model.vdw_mod_rep(dummy_z[:-1], dummy_noisy_force, noise, dummy_hamaker)
+        vdw_cone_model = ml.vdw_cone(dummy_z[:-1], dummy_noisy_force, noise, dummy_hamaker)
+        self.assertTrue(isinstance(vdw_cone_model, pm.Model))
         
-        self.assertTrue(isinstance(vdw_rep_model, pm.Model))
+class TestvdWConeSphModel(TestCase):
+    def test_returns_model_class(self):
+        dummy_noisy_force = dummy_force*10**9 + scipy.stats.norm.rvs(loc=0, scale = noise, size = len(dummy_z)-1)
+        vdw_cone_sph_model = ml.vdw_cone_sph(dummy_z[:-1], dummy_noisy_force, noise, dummy_hamaker)
+        self.assertTrue(isinstance(vdw_cone_sph_model, pm.Model))
+
+class TestvdWEleModel(TestCase):
+    def test_returns_model_class(self):
+        dummy_noisy_force = dummy_force*10**9 + scipy.stats.norm.rvs(loc=0, scale = noise, size = len(dummy_z)-1)
+        vdw_ele_model = ml.vdw_ele(dummy_z[:-1], dummy_noisy_force, noise, dummy_hamaker)
+        self.assertTrue(isinstance(vdw_ele_model, pm.Model))
