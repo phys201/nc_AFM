@@ -19,6 +19,10 @@ filename = 'all_data_dataframe_237K.csv'
 full_data_directory = Path(package_path, data_folder_path, filename)
 
 class TestDataImport(TestCase):
+    def test_package(self):
+        s = nc_AFM.test()
+        self.assertTrue(isinstance(s, str))
+        
     def test_get_data(self):
         self.testdata = io.load_data(full_data_directory)
         
@@ -27,3 +31,11 @@ class TestDataImport(TestCase):
         
         first_col = test_data.columns[0]
         self.assertEqual(first_col, 'z')
+        
+class TestGetFilePath(TestCase):
+    def test_get_example_data_file_path(self):
+        test_path = io.get_example_data_file_path(filename, data_dir = 'ncafm/example_data')
+        self.assertTrue(isinstance(test_path,Path)) 
+
+if __name__ == '__main__':
+    unittest.main()

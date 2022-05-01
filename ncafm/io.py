@@ -23,6 +23,12 @@ def get_example_data_file_path(filename, data_dir='example_data'):
     
     current_directory = Path.cwd()
     data_path = Path(current_directory, data_dir, filename)
+    
+    #start = Path.abspath(__file__)
+    #start_dir = Path.dirname(start)
+    #data_dir = Path.join(start_dir, data_dir)
+    #data_path = Path.join(start_dir, data_dir, filename)
+    
     return data_path
 
 
