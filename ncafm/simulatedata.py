@@ -43,8 +43,7 @@ def sph(factor, hamaker, radius, noise, z_input, z_0=0):
     
     Inputs:
     -------
-    factor: float. In aJ/nm^2. The repulsive term factor. 
-        Equal to epsilon*sigma^2 in the LJ model, but even less physically motivated. 
+    factor: float. In aJ/nm^4. The repulsive term factor. 
     hamaker: float. In aJ. Hamaker's constant for the specific tip and sample materials.
     radius: float. In nm. radius of the sphere of the tip.
     noise: float In nN. or ndarray (of size z) of noise to be added at each point.
@@ -60,7 +59,7 @@ def sph(factor, hamaker, radius, noise, z_input, z_0=0):
     
     z = z_input - z_0
     
-    perfect_data = factor/z**3 - 2*hamaker*radius**3/(3*z**2*(z+2*radius)**2)
+    perfect_data = factor/z**5 - 2*hamaker*radius**3/(3*z**2*(z+2*radius)**2)
     
     #allows us to calculate one value
     if isinstance(z_input, np.ndarray) == True:
@@ -82,8 +81,7 @@ def cone(factor, hamaker, theta, noise, z_input, z_0 = 0):
     
     Inputs:
     -------
-    factor: float. In aJ/nm^2. The repulsive term factor. 
-        Equal to epsilon*sigma^2 in the LJ model, but even less physically motivated. 
+    factor: float. In aJ/nm^4. The repulsive term factor. 
     hamaker: float. In aJ. Hamaker's constant for the specific tip and sample materials.
     theta: float. In degrees. half-angle opening of the tip.
     noise: float In nN. or ndarray (of size z) of noise to be added at each point.
@@ -100,7 +98,7 @@ def cone(factor, hamaker, theta, noise, z_input, z_0 = 0):
     
     z = z_input - z_0
     
-    perfect_data = factor/z**3 - hamaker*np.tan(theta_rad)**2/(6*z)
+    perfect_data = factor/z**5 - hamaker*np.tan(theta_rad)**2/(6*z)
     
     #allows us to calculate one value
     if isinstance(z_input, np.ndarray) == True:
@@ -123,8 +121,7 @@ def cone_sph(factor, hamaker, radius, theta, noise, z_input, z_0=0):
     
     Inputs:
     -------
-    epsilon: float. In nV. The depth of the well in the L-J theory. 
-    sigma: float. In nm. The distance to 0 potential in the L-J theory.
+    factor: float. In aJ/nm^4. The repulsive term factor. 
     hamaker: float. In nV. Hamaker's constant for the specific tip and sample materials.
     radius: float. In nm. radius of the sphere of the tip.
     theta: float. In degrees. half-angle opening of the conical part of the tip. 
@@ -142,7 +139,7 @@ def cone_sph(factor, hamaker, radius, theta, noise, z_input, z_0=0):
     
     z = z_input - z_0
     
-    perfect_data = factor/z**3 - hamaker/6*(radius/z**2 
+    perfect_data = factor/z**5 - hamaker/6*(radius/z**2 
                                     + radius*(1-np.sin(theta_rad))/(z*(z+radius*(1-np.sin(theta_rad)))) 
                                     + np.tan(theta_rad)**2/(z+radius*(1-np.sin(theta_rad))))
     
@@ -159,22 +156,23 @@ def cone_sph(factor, hamaker, radius, theta, noise, z_input, z_0=0):
     return noisy_m3_rep_data
 
 
-def ele(theta, radius, voltage, noise, z_input, hamaker, factor, z_0=0, vdw_type = 'sph'):
+def ele(factor, hamaker, radius, voltage, noise, z_input, theta = 30, z_0=0, vdw_type = 'sph'):
     
     '''
     generates noisy force data which includes physically motivated vdw term and electrostatics term.
     
     Inputs:
     -------
-    factor: float. In aJ/nm^2. The repulsive term factor. 
-    radius: float. In nm. radius of the sphere of the tip.
-    voltage: float. the voltage that minimizes the electrostatics forces
+    factor: float. In aJ/nm^4. The repulsive term factor. 
+    hamaker: float. In nV. Hamaker's constant for the specific tip and sample materials.
+    radius: float. In nm. radius of the sphere of the tip. 
+    voltage: float. In V. the voltage applied minus the votlage that minimizes the electrostatics forces
     noise: float In nN. or ndarray (of size z) of noise to be added at each point.
-    z: ndarray. In nm. the range over which the function will generate the data.
+    z_input: ndarray. In nm. the range over which the function will generate the data.
+    
+    theta: float. [in degrees]. Only required if vdw_type = 'cone' or 'sph+cone'.
     z_0: float. In nm. A z offset. Optional, default is no offset.
     vdw_type: string. Specifies the vdW force geometry as either sphere, cone, or sphere+cone
-    hamaker: float. In nV. Hamaker's constant for the specific tip and sample materials.
-    theta: float. [in degrees]. Only required if vdw_type = 'cone' or 'sph+cone'.
     
     Returns:
     --------
@@ -200,7 +198,10 @@ def ele(theta, radius, voltage, noise, z_input, hamaker, factor, z_0=0, vdw_type
     else:
         return ValueError('vdw_type does not correspond to a defined model type. Options: sph, cone, sph+cone')
     
-    perfect_data = factor/z**3 + vdw_force - 9*10**36*voltage**2*(np.pi*radius**2)**2/z**4
+    
+    epsilon_0 = 8.854*10**-3 #nN/V^2
+
+    perfect_data = rep_factor/z**3 + vdw_force - np.pi*epsilon_0*voltage**2*radius**4/z**4
 
     #allows us to calculate one value
     if isinstance(z_input, np.ndarray) == True:
