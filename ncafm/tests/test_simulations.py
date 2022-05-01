@@ -94,3 +94,7 @@ class TestSimulate_data_ele(TestCase):
         dummy_ele = dummy_xi/dummy_z**3 + vdw_force - 9*10**36*dummy_voltage**2*(np.pi*dummy_radius**2)**2/dummy_z**4
         ele_from_fn = sim.ele(dummy_theta, dummy_radius, dummy_voltage, noise, dummy_z, dummy_hamaker, dummy_xi, vdw_type = 'sph+cone')
         self.assertEqual(dummy_ele, ele_from_fn)
+        
+        
+if __name__ == '__main__':
+    unittest.main()

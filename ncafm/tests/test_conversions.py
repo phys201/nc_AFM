@@ -35,3 +35,6 @@ class Testptp2variation(TestCase):
         sampling_time = 0.0125
         test_noise = cnv.ptp2variation(dummy_ptp, sampling_time)
         self.assertAlmostEqual(0.04, test_noise, 1)
+
+if __name__ == '__main__':
+    unittest.main()
