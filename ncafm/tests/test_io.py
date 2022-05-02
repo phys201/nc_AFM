@@ -19,16 +19,18 @@ filename = 'all_data_dataframe_237K.csv'
 full_data_directory = Path(package_path, data_folder_path, filename)
 
 class TestDataImport(TestCase):
-    def test_package(self):
-        s = nc_AFM.test()
-        self.assertTrue(isinstance(s, str))
-        
-    def test_get_data(self):
-        self.testdata = io.load_data(full_data_directory)
+    def test_data_io(self):
+        '''
+        tests io file loads data correctly
+        '''
+        data = io.load_data(full_data_directory)
+        #new_dataframe=data[0]
+        test_value=data['z'][0]
+        message = "The package did not load correctly!"
+        self.assertEqual(test_value, -3.1828253810317626e-08, message)
         
     def test_first_column_is_z(self):
-        test_data = io.load_data(full_data_directory)
-        
+        test_data = io.load_data(full_data_directory)        
         first_col = test_data.columns[0]
         self.assertEqual(first_col, 'z')
         

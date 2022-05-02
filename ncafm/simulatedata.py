@@ -200,9 +200,7 @@ def ele(factor, hamaker, radius, voltage, noise, z_input, theta = 30, z_0=0, vdw
     
     
     epsilon_0 = 8.854*10**-3 #nN/V^2
-
-    perfect_data = rep_factor/z**3 + vdw_force - np.pi*epsilon_0*voltage**2*radius**4/z**4
-
+    perfect_data = factor/z**5 + vdw_force - np.pi*epsilon_0*voltage**2*(np.pi*radius**2)**2/z**4
     #allows us to calculate one value
     if isinstance(z_input, np.ndarray) == True:
         length = len(z_input)
