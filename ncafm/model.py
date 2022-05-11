@@ -61,7 +61,7 @@ def len_jon(z_input, force_data, noise, fit_z0 = False, epsilon_init = 1, sigma_
     
     return lj_model
 
-def vdw_sph(z_input, force_data, noise, hamaker, fit_z0 = False, rep_factor_init = 1000, radius_init = 30, rep_factor_mean = 1000, rep_factor_var = 500, radius_var = 10):
+def vdw_sph(z_input, force_data, noise, hamaker, fit_z0 = True, rep_factor_init = 100, alpha_init = 1, radius_init = 30, rep_factor_mean = 100, rep_factor_var = 100, alpha_var = 1, radius_var = 10):
     
     '''
     Generates a force model which includes a repulsive (~1/z^3) and an attracrive vdW force derived from a spherical tip.
@@ -75,18 +75,19 @@ def vdw_sph(z_input, force_data, noise, hamaker, fit_z0 = False, rep_factor_init
     
     Optional inputs:
     ---------------
-    fit_z0: Boolean. True if the user wishes to fit a z offset. Default is False.
+    fit_z0: Boolean. True if the user wishes to fit a z offset. Default is True for full posterior.
     
-    rep_factor_init: float. [in aJ*nm^2] starting point for epsilon. default = 1000.
+    rep_factor_init: float. [in aJ/nm] starting point for the repulsive term pre-factor. default = 100.
+    alpha: float. [in nm^-1]. The scaling factor for the repulsive term. Default = 1.
     radius_init: float. [in nm] starting point for radius. default = 25.
     theta_init: float. [in degrees] starting point for hanf-angle opening of the conical tip. default = 35.
     
-    rep_factor_mean: float. [in aJ*nm^2] The mean value for repulsive factor in the prior. 
+    rep_factor_mean: float. [in aJ/nm] The mean value for repulsive factor in the prior. 
                     default = 25.
-    rep_factor_var: float. [in aJ*nm^2] The normal variation for repuslive in the prior.  
-                    default = 500.
+    rep_factor_var: float. [in aJ/nm] The normal variation for repuslive in the prior.  
+                    default = 100.
                     The normal mean and variance will be converted to alpha and beta for a gamma distribution prior.
-    
+    alpha_var: float. [in nm^-1] The normal variation for the repulsive scaling factor prior. Default = 1.
     radius_var: float. [in nm] The variance for the radius. Prior defined by a gamma function. 
                     The mean and the variance will be converted to alpha and beta for a gamma dist. 
                     Default = 20
@@ -105,7 +106,8 @@ def vdw_sph(z_input, force_data, noise, hamaker, fit_z0 = False, rep_factor_init
             
         else:
             raise ValueError('variation is larger than mean for the repulsive factor.')
-
+        
+        alpha = pm.Gamma('alpha', mu = alpha_init, sigma = alpha_var, testval = alpha_init)
         #Gamma prior on radius
         radius = pm.Gamma('radius', mu = radius_init, sigma = radius_var, testval = radius_init)
         
@@ -118,14 +120,14 @@ def vdw_sph(z_input, force_data, noise, hamaker, fit_z0 = False, rep_factor_init
             z = z_input
 
         #model
-        force_model = rep_factor/z**5 - 2*hamaker*radius**3/(3*z**2*(z+2*radius)**2)
+        force_model = rep_factor*np.exp(-alpha*z) - 2*hamaker*radius**3/(3*z**2*(z+2*radius)**2)
 
         # Likelihood of observations (i.e. noise around model)
         measurements = pm.Normal('force', mu=force_model, sigma=noise, observed=force_data)
     
     return m1_z3_rep
 
-def vdw_cone(z_input, force_data, noise, hamaker, fit_z0 = False, rep_factor_init = 1000, theta_init = 40, rep_factor_mean = 1000, rep_factor_var = 500, theta_var = 15):
+def vdw_cone(z_input, force_data, noise, hamaker, fit_z0 = True, rep_factor_init = 100, alpha_init = 1, theta_init = 40, rep_factor_mean = 100, rep_factor_var = 100, alpha_var = 1, theta_var = 15):
     
     '''
     Generates a force model which includes a modified repulsive term from the Lennard Jones force (~1/z^3) derived from squaring the highest power of z in the vdw potential and an attracrive vdW force derived from by a conical tip.
@@ -140,17 +142,18 @@ def vdw_cone(z_input, force_data, noise, hamaker, fit_z0 = False, rep_factor_ini
     
     Optional inputs:
     ---------------
-    fit_z0: Boolean. True if the user wishes to fit a z offset. Default is False.
+    fit_z0: Boolean. True if the user wishes to fit a z offset. Default is True.
     
-    rep_factor_init: float. [in aJ*nm^2] starting point for epsilon. default = 1000.
+    rep_factor_init: float. [in aJ/nm] starting point for the repulsive term pre-factor. default = 100.
+    alpha_init: float. [in nm^-1]. The scaling factor for the repulsive term. Default = 5.
     theta_init: float. [in degrees] starting point for hanf-angle opening of the conical tip. default = 35.
     
-    rep_factor_mean: float. [in aJ*nm^2] The mean value for repulsive factor in the prior. 
-                    default = 500.
-    rep_factor_var: float. [in aJ*nm^2] The normal variation for repuslive in the prior. 
-                    default = 500.
+    rep_factor_mean: float. [in aJ/nm] The mean value for repulsive factor in the prior. 
+                    default = 100.
+    rep_factor_var: float. [in aJ/nm] The normal variation for repuslive in the prior. 
+                    default = 100.
                     The normal mean and variance are converted to alpha and beta for a gamma distribution prior.
-    
+    alpha_var: float. [in nm^-1]. The normal variation for the repulsive scaling factor prior. Defailt = 1.
     theta_var: float. [in degrees] The variance for the half-angle opening. Prior defined by a normal distribution.
                     default = 15
     
@@ -169,6 +172,8 @@ def vdw_cone(z_input, force_data, noise, hamaker, fit_z0 = False, rep_factor_ini
         else:
             raise ValueError('variation is larger than mean for the repulsive factor.')
         
+        alpha = pm.Gamma('alpha', mu = alpha_init, sigma = alpha_var, testval = alpha_init)
+        
         #truncated normal on theta
         theta = pm.TruncatedNormal('theta', mu=theta_init, sigma=theta_var, lower=0, upper=90, testval=theta_init)
 
@@ -183,14 +188,14 @@ def vdw_cone(z_input, force_data, noise, hamaker, fit_z0 = False, rep_factor_ini
             z = z_input
 
         #model
-        force_model = rep_factor/z**5 - hamaker*np.tan(theta_rad)**2/(6*z)
+        force_model = rep_factor*np.exp(-alpha*z) - hamaker*np.tan(theta_rad)**2/(6*z)
 
         # Likelihood of observations (i.e. noise around model)
         measurements = pm.Normal('force', mu=force_model, sigma=noise, observed=force_data)
     
     return m2_z3_rep
 
-def vdw_cone_sph(z_input, force_data, noise, hamaker, fit_z0 = False, rep_factor_init = 1000, radius_init = 30, theta_init = 40, rep_factor_mean = 1000, rep_factor_var = 500, radius_var = 10, theta_var = 15):
+def vdw_cone_sph(z_input, force_data, noise, hamaker, fit_z0 = False, rep_factor_init = 100, alpha_init = 1, radius_init = 30, theta_init = 40, rep_factor_mean = 100, rep_factor_var = 100, alpha_var = 1, radius_var = 10, theta_var = 15):
     
     '''
     Generates a force model which includes the repulsive term from the Lennard Jones force that goes as ~ 1/z^3 and vdW force for the attractive term physically motivated by a sphere at the end of a cone.
@@ -206,16 +211,18 @@ def vdw_cone_sph(z_input, force_data, noise, hamaker, fit_z0 = False, rep_factor
     ---------------
     fit_z0: Boolean. True if the user wishes to fit a z offset. Default is False.
     
-    rep_factor_init: float. [in aJ*nm^12] starting point for th repulsive factor. default = 1000.
+    rep_factor_init: float. [in aJ/nm] starting point for the repulsive term pre-factor. default = 100.
+    alpha: float. [in nm^-1]. The scaling factor for the repulsive term. Default = 1.
     radius_init: float. [in nm] starting point for radius. default = 30.
     theta_init: float. [in degrees] starting point for hanf-angle opening of the conical tip. default = 40.
     
-    rep_factor_mean: float. [in aJ*nm^2] The mean value for repulsive factor in the prior. 
-                    default = 500.
-    rep_factor_var: float. [in aJ*nm^2] The normal variation for repuslive in the prior. 
-                    default = 500.
+    rep_factor_mean: float. [in aJ/nm] The mean value for repulsive factor in the prior. 
+                    default = 100.
+    rep_factor_var: float. [in aJ/nm] The normal variation for repuslive in the prior. 
+                    default = 100.
                     The mean and variance will be converted to alpha and beta for a gamma distribution prior.
     
+    alpha_var: float. [in nm^-1] The normal variation for the repulsive sacling factor prior. Default = 1.
     radius_var: float. [in nm] The variance for the radius. Prior defined by a gamma function. 
                     The mean and the variance will be converted to alpha and beta for a gamma distribution prior. 
                     Default = 10
@@ -255,7 +262,7 @@ def vdw_cone_sph(z_input, force_data, noise, hamaker, fit_z0 = False, rep_factor
             z = z_input
 
         #model
-        force_model = rep_factor/z**5 - hamaker/6*( radius/z**2 
+        force_model = rep_factor*np.exp(-alpha*z) - hamaker/6*( radius/z**2 
                                         + radius*(1-np.sin(theta_rad))/(z*(z+ radius*(1-np.sin(theta_rad)) )) 
                                         + (np.tan(theta_rad))**2/(z+ radius*(1-np.sin(theta_rad)) ) 
                                         )
@@ -266,7 +273,7 @@ def vdw_cone_sph(z_input, force_data, noise, hamaker, fit_z0 = False, rep_factor
     return m3_z3_model
 
     
-def vdw_ele(z_input, force_data, noise, hamaker, voltage, rep_factor, radius_init, radius_var, theta=40, fit_z0 = False, vdw_type = 'sph'):
+def vdw_ele(z_input, force_data, noise, hamaker, voltage, rep_factor, alpha, radius_init, radius_var, theta=40, fit_z0 = False, vdw_type = 'sph'):
     
     '''
     generates model for the force that includes a physically motivated vdw term and electrostatics term. 
@@ -279,8 +286,8 @@ def vdw_ele(z_input, force_data, noise, hamaker, voltage, rep_factor, radius_ini
     noise: float or ndarray (of size force_data) [in nN] 
     hamaker: float. Hamaker's Constant. [in aJ] The constant is defined for each pair of materials. User must calculate the value. 
     voltage: float. [in V] the voltage applied minus the voltage that minimizes the electrostatics forces. 
-    rep_factor: float. [in aJ/nm^4] determined by fitting to the appropriate model at the CPD voltage (ie with no electrostatics).
-    theta: float. [in degrees]. Only required if vdw_type = 'cone' or 'sph+cone'. 
+    rep_factor: float. [in aJ] determined by fitting to the appropriate model at the CPD voltage (ie with no electrostatics).
+    alpha: float. [in nm^-1] The best fit value for the repulsive scaling factor.
     
     radius_init: best fit value of the radius from the vdw fitting at CPD voltage
     radius_var: best fit variation of the radius from the vdw fitting at CPD voltage. 
@@ -329,7 +336,7 @@ def vdw_ele(z_input, force_data, noise, hamaker, voltage, rep_factor, radius_ini
         epsilon_0 = 8.854*10**-3 #nN/V^2
         
         #model
-        force_model = rep_factor/z**3 + vdw_force - np.pi*epsilon_0*voltage**2*radius**4/z**4
+        force_model = rep_factor*np.exp(-alpha*z) + vdw_force - np.pi*epsilon_0*voltage**2*radius**4/z**4
 
         # Likelihood of observations (i.e. noise around model)
         measurements = pm.Normal('force', mu=force_model, sigma=noise, observed=force_data)
