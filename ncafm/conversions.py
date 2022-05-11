@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.stats
+import pandas as pd
 
 def df2force(z, df_data, v, a, k, f_0, cpd_v= '0.0'):
     
@@ -24,7 +25,7 @@ def df2force(z, df_data, v, a, k, f_0, cpd_v= '0.0'):
     Returns:
     --------
     force_array: ndarray (of size z - 1) of the corresponding force in units of [N], calculated using the method outlined
-        by Sader and Jarvis (2004) DOI: 10.1063/1.1667267 Eg (9).
+        by Sader and Jarvis (2004) DOI: 10.1063/1.1667267 Eq (9).
         
         Notice: the resulting force array is smaller than the input z and df arrays by 1 due to taking a derivative. The final data point should be removed from z. 
     
@@ -129,3 +130,47 @@ def ptp2variation(ptp, averaging_time, sampling_rate = 10000, plot_high_freq = F
     averaged_noise = np.sqrt(np.mean(rolling_ave_noise**2))
     
     return averaged_noise
+
+def smc_trace2dataframe(traces_smc, model_type, num_burn=0):
+    
+    '''
+    Function that converts the MultiTrace output created from pm.sample_smc to a Dataframe.
+    
+    Inputs:
+    -------
+    traces_smc: MultiTrace object; the result of sampling using SMC.
+    modely_type: string. 'sph', 'cone', 'cone+sph' for the 3 model types in this package
+    
+    num_burn: integer. Optional. Number of samples to ignore from the start of each chain.
+    
+    Returns:
+    --------
+    df_smc: pandas DataFrame of the samples. 
+    '''
+    
+    if model_type == 'sph':
+        parameters = ['rep factor', 'alpha', 'radius', 'z offset']
+        df_smc = pd.DataFrame(columns = parameters)
+
+        for name in parameters:
+            df_smc[name] = traces_smc.get_values(name, burn=num_burn, combine=True)
+    
+    elif model_type == 'cone':
+        parameters = ['rep factor', 'alpha', 'theta', 'z offset']
+        df_smc = pd.DataFrame(columns = parameters)
+
+        for name in parameters:
+            df_smc[name] = traces_smc.get_values(name, burn=num_burn, combine=True)
+            
+    elif model_type == 'cone+sph':
+        parameters = ['rep factor', 'alpha', 'radius', 'theta', 'z offset']
+        df_smc = pd.DataFrame(columns = parameters)
+
+        for name in parameters:
+            df_smc[name] = traces_smc.get_values(name, burn=num_burn, combine=True)
+            
+    else: 
+        raise ValueError('model_type does not correspond to a defined model type. Options: sph, cone, cone+sph')
+            
+    return df_smc
+        

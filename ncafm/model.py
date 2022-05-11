@@ -244,7 +244,8 @@ def vdw_cone_sph(z_input, force_data, noise, hamaker, fit_z0 = False, rep_factor
             
         else:
             raise ValueError('variation is larger than mean for the repulsive factor.')
-
+        
+        alpha = pm.Gamma('alpha', mu = alpha_init, sigma = alpha_var, testval = alpha_init)
         #Gamma prior on radius
         radius = pm.Gamma('radius', mu = radius_init, sigma = radius_var, testval = radius_init)
 
@@ -323,14 +324,14 @@ def vdw_ele(z_input, force_data, noise, hamaker, voltage, rep_factor, alpha, rad
             theta_rad = np.deg2rad(theta)
             vdw_force = - hamaker*np.tan(theta_rad)**2/(6*z)
             
-        elif vdw_type == 'sph+cone':
+        elif vdw_type == 'cone+sph':
             theta_rad = np.deg2rad(theta)
             vdw_force = - hamaker/6*( radius/z**2 
                                         + radius*(1-np.sin(theta_rad))/(z*(z+ radius*(1-np.sin(theta_rad)) )) 
                                         + (np.tan(theta_rad))**2/(z+ radius*(1-np.sin(theta_rad)) ) 
                                         )  
         else:
-            return ValueError('vdw_type does not correspond to a defined model type. Options: sph, cone, sph+cone')
+            return ValueError('vdw_type does not correspond to a defined model type. Options: sph, cone, cone+sph')
         
         
         epsilon_0 = 8.854*10**-3 #nN/V^2

@@ -37,7 +37,7 @@ def plot_traces(x, data, fit_traces, map_dict, hamaker, fit_type = 'sph', y_min 
     elif fit_type == 'cone+sph':
         plt.plot(x, sim.cone_sph(x, map_dict['rep factor'], map_dict['alpha'], hamaker, map_dict['radius'], map_dict['theta'], 0, z_0 = map_dict['z offset']), c='k', label = 'MAP')
     else: 
-        raise ValueError('vdw_type does not correspond to a defined model type. Options: sph, cone, sph+cone')
+        raise ValueError('fit_type does not correspond to a defined model type. Options: sph, cone, cone+sph')
                          
     #choose 8 lines to show at random
     indices = np.random.randint(len(fit_dataframe), size=int(num_traces))
@@ -60,7 +60,7 @@ def plot_traces(x, data, fit_traces, map_dict, hamaker, fit_type = 'sph', y_min 
             plt.scatter(x, sim.cone_sph(x, rep_factor, alpha, hamaker, radius, theta, 0, z_0 = z_0), c="C1", s=4, alpha=0.4, label = 'trace')
         
         else: 
-            raise ValueError('vdw_type does not correspond to a defined model type. Options: sph, cone, sph+cone')
+            raise ValueError('fit_type does not correspond to a defined model type. Options: sph, cone, cone+sph')
             
     plt.ylim([y_min, y_max])
     plt.legend(loc = 1)

@@ -184,13 +184,13 @@ def ele(z_input, factor, alpha, hamaker, radius, voltage, noise, theta = 30, z_0
     elif vdw_type == 'cone':
         vdw_force = - hamaker*np.tan(theta_rad)**2/(6*z)
             
-    elif vdw_type == 'sph+cone':
+    elif vdw_type == 'cone+sph':
         vdw_force = - hamaker/6*( radius/z**2 
                                         + radius*(1-np.sin(theta_rad))/(z*(z+ radius*(1-np.sin(theta_rad)) )) 
                                         + (np.tan(theta_rad))**2/(z+ radius*(1-np.sin(theta_rad)) ) 
                                         )  
     else:
-        return ValueError('vdw_type does not correspond to a defined model type. Options: sph, cone, sph+cone')
+        return ValueError('vdw_type does not correspond to a defined model type. Options: sph, cone, cone+sph')
     
     
     epsilon_0 = 8.854*10**-3 #nN/V^2
