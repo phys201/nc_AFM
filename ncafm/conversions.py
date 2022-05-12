@@ -37,7 +37,7 @@ def df2force(z, df_data, v, a, k, f_0, cpd_v= '0.0'):
     const_3 = root_amplitude**3 / np.sqrt(2)      #units m * sqrt m
 
     xdata = z
-    ydata = df_data[v]
+    ydata = df_data[v] + 0.0447
     
     size = len(z)
 
@@ -131,7 +131,7 @@ def ptp2variation(ptp, averaging_time, sampling_rate = 10000, plot_high_freq = F
     
     return averaged_noise
 
-def smc_trace2dataframe(traces_smc, model_type, num_burn=0):
+def smctrace2dataframe(traces_smc, model_type, num_burn=0):
     
     '''
     Function that converts the MultiTrace output created from pm.sample_smc to a Dataframe.

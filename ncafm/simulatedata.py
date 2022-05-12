@@ -190,7 +190,7 @@ def ele(z_input, factor, alpha, hamaker, radius, voltage, noise, theta = 30, z_0
                                         + (np.tan(theta_rad))**2/(z+ radius*(1-np.sin(theta_rad)) ) 
                                         )  
     else:
-        return ValueError('vdw_type does not correspond to a defined model type. Options: sph, cone, cone+sph')
+        raise ValueError('vdw_type does not correspond to a defined model type. Options: sph, cone, cone+sph')
     
     
     epsilon_0 = 8.854*10**-3 #nN/V^2
