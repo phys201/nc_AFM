@@ -53,11 +53,12 @@ class TestvdWConeSphModel(TestCase):
 class TestvdWEleModel(TestCase):
     def test_returns_model_class(self):
         dummy_v = 1
-        dummy_rep_factor = 100 
+        dummy_rep_factor = 100
+        dummy_alpha = 1
         dummy_radius_init = 40 
         dummy_radius_var = 15
         dummy_noisy_force = dummy_force*10**9 + scipy.stats.norm.rvs(loc=0, scale = noise, size = len(dummy_z))
-        vdw_ele_model = ml.vdw_ele(dummy_z, dummy_noisy_force, noise, dummy_hamaker, dummy_v, dummy_rep_factor, dummy_radius_init, dummy_radius_var)
+        vdw_ele_model = ml.vdw_ele(dummy_z, dummy_noisy_force, noise, dummy_hamaker, dummy_v, dummy_rep_factor, dummy_alpha, dummy_radius_init, dummy_radius_var)
         self.assertTrue(isinstance(vdw_ele_model, pm.Model))
         
 if __name__ == '__main__':
