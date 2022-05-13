@@ -95,10 +95,14 @@ def print_ci(traces, variable, ci_range = 67):
     lower_bound = np.round(0.5 - ci_range/2/100,3)
     upper_bound = np.round(0.5 + ci_range/2/100,3)
     
-    
-    
     MAP = traces_dataframe.quantile([lower_bound,0.50,upper_bound], axis=0)
-    print("The {:.1f} % credibility interval for".format((upper_bound-lower_bound)*100), 
-          variable, "= {:.2f} + {:.2f} - {:.2f}".format(MAP[variable][0.50],
-                                            MAP[variable][upper_bound]-MAP[variable][0.50],
-                                            MAP[variable][0.50]-MAP[variable][lower_bound]))
+    
+    lower_value = MAP[variable][0.50]-MAP[variable][lower_bound]
+    upper_value = MAP[variable][upper_bound]-MAP[variable][0.50]
+    
+    if lower_value < 0.005 or lower_value > 1000 or upper_value < 0.005 or upper_value > 1000 :
+        print("The {:.1f} % credibility interval for".format((upper_bound-lower_bound)*100), 
+          variable, "= {:.2e} + {:.2e} - {:.2e}".format(MAP[variable][0.50],upper_value,lower_value))
+    else:
+        print("The {:.1f} % credibility interval for".format((upper_bound-lower_bound)*100), 
+          variable, "= {:.2f} + {:.2f} - {:.2f}".format(MAP[variable][0.50],upper_value,lower_value))

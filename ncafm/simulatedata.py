@@ -42,8 +42,8 @@ def sph(z_input, factor, alpha, hamaker, radius, noise, z_0=0):
     Inputs:
     -------
     z_input: ndarray. In nm. the range over which the function will generate the data
-    factor: float. In aJ/nm. The repulsive term factor. 
-    alpha: float. In nm^-1. The repulsive term length scale.
+    factor: float. In aJ/nm = nN. The repulsive term factor. 
+    alpha: float. In nm. The repulsive term length scale.
     hamaker: float. In aJ. Hamaker's constant for the specific tip and sample materials.
     radius: float. In nm. radius of the sphere of the tip.
     noise: float In nN. or ndarray (of size z) of noise to be added at each point.
@@ -58,7 +58,7 @@ def sph(z_input, factor, alpha, hamaker, radius, noise, z_0=0):
     
     z = z_input - z_0
     
-    perfect_data = factor*np.exp(-alpha*z) - 2*hamaker*radius**3/(3*z**2*(z+2*radius)**2)
+    perfect_data = factor*np.exp(-z/alpha) - 2*hamaker*radius**3/(3*z**2*(z+2*radius)**2)
     
     #allows us to calculate one value
     if isinstance(z_input, np.ndarray) == True:
@@ -78,8 +78,8 @@ def cone(z_input, factor, alpha, hamaker, theta, noise, z_0 = 0):
     Inputs:
     -------
     z_input: ndarray. In nm. the range over which the function will generate the data
-    factor: float. In aJ/nm. The repulsive term factor. 
-    alpha: float. In nm^-1. The repulsive term length scale. 
+    factor: float. In aJ/nm = nN. The repulsive term factor. 
+    alpha: float. In nm. The repulsive term length scale. 
     hamaker: float. In aJ. Hamaker's constant for the specific tip and sample materials.
     theta: float. In degrees. half-angle opening of the tip.
     noise: float In nN. or ndarray (of size z) of noise to be added at each point.
@@ -95,7 +95,7 @@ def cone(z_input, factor, alpha, hamaker, theta, noise, z_0 = 0):
     
     z = z_input - z_0
     
-    perfect_data = factor*np.exp(-alpha*z) - hamaker*np.tan(theta_rad)**2/(6*z)
+    perfect_data = factor*np.exp(-z/alpha) - hamaker*np.tan(theta_rad)**2/(6*z)
     
     #allows us to calculate one value
     if isinstance(z_input, np.ndarray) == True:
@@ -117,8 +117,8 @@ def cone_sph(z_input, factor, alpha, hamaker, radius, theta, noise, z_0=0):
     Inputs:
     -------
     z_input: ndarray. In nm. the range over which the function will generate the data
-    factor: float. In aJ/nm. The repulsive term factor. 
-    alpha: float. In nm^-1. The repulsive term length scale.
+    factor: float. In aJ/nm = nN. The repulsive term factor. 
+    alpha: float. In nm. The repulsive term length scale.
     hamaker: float. In nV. Hamaker's constant for the specific tip and sample materials.
     radius: float. In nm. radius of the sphere of the tip.
     theta: float. In degrees. half-angle opening of the conical part of the tip. 
@@ -135,7 +135,7 @@ def cone_sph(z_input, factor, alpha, hamaker, radius, theta, noise, z_0=0):
     
     z = z_input - z_0
     
-    perfect_data = factor*np.exp(-alpha*z) - hamaker/6*(radius/z**2 
+    perfect_data = factor*np.exp(-z/alpha) - hamaker/6*(radius/z**2 
                                     + radius*(1-np.sin(theta_rad))/(z*(z+radius*(1-np.sin(theta_rad)))) 
                                     + np.tan(theta_rad)**2/(z+radius*(1-np.sin(theta_rad))))
     
@@ -157,8 +157,8 @@ def ele(z_input, factor, alpha, hamaker, radius, voltage, noise, theta = 30, z_0
     Inputs:
     -------
     z_input: ndarray. In nm. the range over which the function will generate the data.
-    factor: float. In aJ/nm. The repulsive term factor. 
-    alpha: float. In nm^-1. The repulsive term length scale.
+    factor: float. In aJ/nm = nN. The repulsive term factor. 
+    alpha: float. In nm. The repulsive term length scale.
     hamaker: float. In nV. Hamaker's constant for the specific tip and sample materials.
     radius: float. In nm. radius of the sphere of the tip. 
     voltage: float. In V. the voltage applied minus the votlage that minimizes the electrostatics forces
@@ -194,7 +194,7 @@ def ele(z_input, factor, alpha, hamaker, radius, voltage, noise, theta = 30, z_0
     
     
     epsilon_0 = 8.854*10**-3 #nN/V^2
-    perfect_data = factor*np.exp(-alpha*z) + vdw_force - np.pi*epsilon_0*voltage**2*(np.pi*radius**2)**2/z**4
+    perfect_data = factor*np.exp(-z/alpha) + vdw_force - np.pi*epsilon_0*voltage**2*(np.pi*radius**2)**2/z**4
     
     #allows us to calculate one value
     if isinstance(z_input, np.ndarray) == True:
