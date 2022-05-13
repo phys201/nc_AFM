@@ -15,7 +15,7 @@ dummy_hamaker = 1
 dummy_radius = 50
 dummy_noise = 0.1
 
-dummy_force = dummy_c*np.exp(-dummy_alpha*dummy_z) - dummy_hamaker*dummy_radius**3/(dummy_z**2*(dummy_z + 2*dummy_radius)**2)
+dummy_force = dummy_c*np.exp(-dummy_z/dummy_alpha) - dummy_hamaker*dummy_radius**3/(dummy_z**2*(dummy_z + 2*dummy_radius)**2)
 
 class TestPlotTraces(TestCase):
     def test_bad_string_sph_cone(self):

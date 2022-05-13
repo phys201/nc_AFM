@@ -16,19 +16,16 @@ def df2force(z, df_data, v, a, k, f_0, cpd_v= '0.0'):
     z: ndarray of the height of the tip. It does not need to be height with respect to sample,
         but the differences between heights need to be accurate. In units of [m]
     df_data: frequency shift dataframe at corresponding z positions at all V. In units of [Hz].
-    V: string of the voltage you wish to convert
-    CPD_V: strin gof the CPD voltage - used for a small shift correction to the data
+    v: string of the voltage you wish to convert
+    cpd_v: string of the CPD voltage - used for a small shift correction to the data
     a: float. amplitude of oscillation in units of [m]
     k: spring constant of the AFM tip. in untis of [N/m]
     f_0: reasonant frequency of the AFM tip. in [Hz].
     
     Returns:
     --------
-    force_array: ndarray (of size z - 1) of the corresponding force in units of [N], calculated using the method outlined
+    force_array: ndarray (of size z) of the corresponding force in units of [N], calculated using the method outlined
         by Sader and Jarvis (2004) DOI: 10.1063/1.1667267 Eq (9).
-        
-        Notice: the resulting force array is smaller than the input z and df arrays by 1 due to taking a derivative. The final data point should be removed from z. 
-    
     '''
     
     root_amplitude = np.sqrt(a)
@@ -37,7 +34,7 @@ def df2force(z, df_data, v, a, k, f_0, cpd_v= '0.0'):
     const_3 = root_amplitude**3 / np.sqrt(2)      #units m * sqrt m
 
     xdata = z
-    ydata = df_data[v] + 0.0447
+    ydata = df_data[v]
     
     size = len(z)
 
